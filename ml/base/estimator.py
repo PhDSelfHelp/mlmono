@@ -1,13 +1,16 @@
 import tensorflow as tf
 
+from ml.base import MLGraph, MLTrainer
+
 
 class MLEstimator(object):
-    def __init__(self, config, graph, trainer, evaluator, metrics):
+    def __init__(self, config, graph, trainer, predictor, metrics, io):
         self.config = config
         self.graph = graph
         self.trainer = trainer
-        self.evaluator = evaluator
+        self.predictor = predictor
         self.metrics = metrics
+        self.io = io
         self.estimator = self._gen_estimator()
 
         self.output = None
@@ -16,15 +19,19 @@ class MLEstimator(object):
 
     @classmethod
     def from_config(cls, config):
-        graph = Graph.from_config(config.graph)
-        trainer = Trainer.from_config(config.trainer)
-        evaluator = Evaluator.from_config(config.evaluator)
-        cls(config, model, trainer, evaluator)
+        graph = MLGraph.from_config(config.graph)
+        trainer = MLTrainer.from_config(config.trainer)
+        predictor = MLPredictor.from_config(config.predictor)
+        metric = MLMetric.from_config(config.metric)
+        io = MLIO.from_config(config.io)
+
+        return cls(config, model, trainer, predictor, metric, io)
 
     def _gen_estimator(self):
         estimator = tf.estimator.Estimator(
             model_fn=self._gen_model_fn(),
             input_fn=self._gen_input_fn(),
+            model_dir=self.io.model_dir,
         )
         return estimator
 
@@ -47,9 +54,11 @@ class MLEstimator(object):
                 loss=self.train,
                 train_op=self.trainer.train_op,
                 training_hooks=self.trainer.train_hooks,
-                eval_metric_ops=metrics)
+                eval_metric_ops=metrics
+            )
         return model_fn
 
     def _gen_input_fn(self):
         def input_fn(features, labels, mode, params):
-            return input_fn
+            pass
+        return input_fn
