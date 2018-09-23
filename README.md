@@ -2,8 +2,6 @@
 Mono repo for all machine learning work.
 For now this package rely on the tensorflow estimator feature.
 
-## Directory structure
-
 ## Adding a model
 
 Models should all go under the directory `models/`.
