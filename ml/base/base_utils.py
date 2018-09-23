@@ -5,4 +5,3 @@ def find_subclass_by_name(cls, subcls_name):
     err_msg = 'Subclass of {} with name {} is not found!'
     err_msg.format(cls.__name__, subcls_name)
     raise ValueError(err_msg)
-    

@@ -2,12 +2,17 @@ import tensorflow as tf
 
 
 class MLEstimator(object):
-    def __init__(self, config, graph, trainer, evaluator):
+    def __init__(self, config, graph, trainer, evaluator, metrics):
         self.config = config
         self.graph = graph
         self.trainer = trainer
         self.evaluator = evaluator
+        self.metrics = metrics
         self.estimator = self._gen_estimator()
+
+        self.output = None
+        self.labels = None
+        self.loss = None
 
     @classmethod
     def from_config(cls, config):
@@ -26,15 +31,22 @@ class MLEstimator(object):
     def _gen_model_fn(self):
         def model_fn(features, labels, mode, params):
             is_training = (mode == tf.estimator.ModeKeys.TRAIN)
-            result = self.graph.add_forward_pass()
 
+            # Construct graph.
+            self.output = self.graph.add_forward_pass()
 
+            # Construct trainer.
+            self.trainer.register_loss_to_graph(self.output, self.labels)
+            self.trainer.register_op_and_hook()
+            self.loss = self.trainer.loss
+
+            # Construct metrics.
             return tf.estimator.EstimatorSpec(
                 mode=mode,
-                predictions=predictions,
-                loss=loss,
-                train_op=train_op,
-                training_hooks=train_hooks,
+                predictions=self.ouput,
+                loss=self.train,
+                train_op=self.trainer.train_op,
+                training_hooks=self.trainer.train_hooks,
                 eval_metric_ops=metrics)
         return model_fn
 
