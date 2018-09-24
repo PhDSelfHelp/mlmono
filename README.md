@@ -6,19 +6,19 @@ For now this package rely on the tensorflow estimator feature.
 
 Models should all go under the directory `models/`.
 
-1. Write a class that inherits from `Graph`
+1. Write a class that inherits from `MLGraph`
 ```python
-class CNN(Graph):
+class CNN(MLGraph):
     def __init__(self):
         # define the variables that you want to interface with the outside
         # mostly for debugging
-        # input and output are the default names for the forward model as defined in `Graph`
+        # input and output are the default names for the forward model as defined in `MLGraph`
         # self.input = None
         # self.output = None
 ```
 2. Defined a forward-pass function for the model
 ```python
-class CNN(Graph):
+class CNN(MLGraph):
     ...
     def add_forward_pass(self, features):
         # define the forward model
@@ -48,13 +48,13 @@ The entry script is `cli.py` so basically you can run the `mlmono.cli` module in
 ### To train a model
 
 ```
-python -m mlmono.cli train --config configs/mnist.yml
+mlmono train --config configs/mnist.yml
 ```
 
 ### To do prediction
 
 ```
-python mlmono.cli predict --config configs/mnist.yml
+mlmono predict --config configs/mnist.yml
 ```
 
 ## How it works
