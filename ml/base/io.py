@@ -35,12 +35,18 @@ class MLIO(object):
                 raise ValueError(msg)
             self.filenames = find_tfrecords_in_dir(data_dir, self.data_dir)
 
-        # Model saving configs for tf.estimator checkpoints.
-        self.model_dir = self.io_config.model_dir
-
         # Logs and summary saving configs for tf.summary.FileWriter.
         self.logs_dir = self.io_config.logs_dir
         self.logs_flush_secs = getattr(self.io_config, 'logs_flush_secs', 120)
+
+        # Model saving configs for tf.estimator checkpoints.
+        self.model_dir = io_config.model_dir
+
+        # Logs and summary saving configs for tf.summary.FileWriter.
+        self.logs_dir = io_config.logs_dir
+        self.logs_flush_secs = 120,
+        if getattr(io.config, 'logs_flush_secs', None):
+            self.logs_flush_secs = io.config.logs_flush_secs
 
     @classmethod
     def from_config(cls, io_config):
