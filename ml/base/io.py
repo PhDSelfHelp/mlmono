@@ -42,35 +42,31 @@ class MLIO(object):
         self.logs_dir = self.io_config.logs_dir
         self.logs_flush_secs = getattr(self.io_config, 'logs_flush_secs', 120)
 
-        # Logs and summary saving configs for tf.summary.FileWriter.
-        self.logs_dir = io_config.logs_dir
-        self.logs_flush_secs = 120,
-        if getattr(io.config, 'logs_flush_secs', None):
-            self.logs_flush_secs = io.config.logs_flush_secs
-
     @classmethod
     def from_config(cls, io_config):
         subcls = find_subclass_by_name(cls, io_config.io_name)
         return subcls.from_config(io_config)
+
+    def gen_input_fn(self, num_epochs):
+        raise NotImplementedError
+
+    @staticmethod
+    def parse_file(filename):
+        raise NotImplementedError
 
 
 class DefaultIO(MLIO):
     @classmethod
     def from_config(cls, io_config):
         io = cls(io_config)
-        io.summary_writer = tf.summary.FileWriter(logs_dir, graph=tf.get_default_graph())
+        io.summary_writer = tf.summary.FileWriter(self.logs_dir,
+                                                  graph=tf.get_default_graph()
+                                                 )
         io.data = tf.data.TFRecordDataset(self.filenames,
                                           buffer_size=None,
                                           num_parallel_reads=None,
                                          )
         return io
-
-    def parse_file(record):
-        # parse the record with tf.parse_single_example
-        iterator = tf.contrib.data.TFRecordDataset(
-            glob.glob("data/tfrecords/training_shard_*.tfrecord")
-        ).map(parser).batch(batch_size).shuffle(shuffle_num).repeat(repeat_num).make_initializable_iterator()
-        next_element = iterator.get_next()
 
     def gen_input_fn(self, num_epochs):
         def input_fn():
@@ -81,7 +77,7 @@ class DefaultIO(MLIO):
             # this ensures better reproducibility.
             dataset = list_files.apply(
                 tf.contrib.data.parallel_interleave(
-                    lambda filename: parse_file(filename),
+                    lambda filename: self.parse_file(filename),
                     cycle_length=INTERLEAVE_CYCLE,
                     block_length=INTERLEAVE_BLOCK
                 )
@@ -95,3 +91,7 @@ class DefaultIO(MLIO):
             features = iterator.get_next()
             return features, features.pop(LABEL_COLUMN)
         return input_fn
+
+    @staticmethod
+    def parse_file(filename):
+        raise NotImplementedError
