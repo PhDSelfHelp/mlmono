@@ -88,10 +88,18 @@ class DefaultIO(MLIO):
             dataset = dataset.shuffle(self.io_config.data_shuffle_buffer)
             dataset = dataset.repeat(num_epochs)
             iterator = dataset.make_one_shot_iterator()
-            features = iterator.get_next()
-            return features, features.pop(LABEL_COLUMN)
+
+            data_ite = iterator.get_next()
+            features, labels = self.parse_data(data_ite)
+            return features, labels
         return input_fn
 
     @staticmethod
     def parse_file(filename):
         raise NotImplementedError
+        return data_chunk
+
+    @staticmethod
+    def parse_data(data_chunk):
+        raise NotImplementedError
+        return features, labels
