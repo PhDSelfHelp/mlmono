@@ -21,11 +21,11 @@ class ExamplesPerSecondHook(session_run_hook.SessionRunHook):
             every_n_steps=100,
             every_n_secs=None,):
         """Initializer for ExamplesPerSecondHook.
-          Args:
-          batch_size: Total batch size used to calculate examples/second from
-          global time.
-          every_n_steps: Log stats every n steps.
-          every_n_secs: Log stats every n seconds.
+        Args:
+            batch_size: Total batch size used to calculate examples/second from
+                        global time.
+            every_n_steps: Log stats every n steps.
+            every_n_secs: Log stats every n seconds.
         """
         if (every_n_steps is None) == (every_n_secs is None):
             raise ValueError('exactly one of every_n_steps'
