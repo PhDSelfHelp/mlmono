@@ -1,0 +1,8 @@
+graph:
+    graph_name: mnist_graph
+
+io:
+    io_name: DefaultIO
+    
+    INTERLEAVE_BLOCK = 1
+    INTERLEAVE_CYCLE = 100
