@@ -8,26 +8,31 @@ Models should all go under the directory `models/`.
 
 1. Write a class that inherits from `Graph`
 ```python
-class Cnn(Graph):
+class CNN(Graph):
     def __init__(self):
         # define the variables that you want to interface with the outside
         # mostly for debugging
+        # input and output are the default names for the forward model as defined in `Graph`
+        # self.input = None
+        # self.output = None
 ```
 2. Defined a forward-pass function for the model
 ```python
-class Cnn(Graph):
+class CNN(Graph):
     ...
     def add_forward_pass(self, features):
         # define the forward model
         # returns the prediction output
+        # self.input and self.output must now refer to a variable node
 ```
 
 3. Write a config file
 
 Config files are YAML files that describes a test case.
-They technically can be anywhere but we suggest that you also put them under `configs/`.
+They technically can be anywhere but we suggest that you put them under `configs/` and keep track of them along with the version controll system.
 A config file should have at least `io > dataset`, `model` and `trainer` fields.
 The corresponding modules of the model will be initialized according to the variables under those fields.
+Refer to the example config for more details.
 
 ## How to run
 
@@ -35,18 +40,21 @@ Before you can run the script, you usually need to run
 ```
 python setup.py develop
 ```
-in order to set up the entry point. The entry script is `mlmono.py`
+in order to set up the entry point.
+This is necessary to make the import paths correct.
+
+The entry script is `cli.py` so basically you can run the `mlmono.cli` module in most of the cases.
 
 ### To train a model
 
 ```
-python mlmono.py -m mlmono.cli --config configs/mnist.yml --train
+python -m mlmono.cli train --config configs/mnist.yml
 ```
 
 ### To do prediction
 
 ```
-python mlmono.py -m mlmono.cli --config configs/mnist.yml --predict
+python mlmono.cli predict --config configs/mnist.yml
 ```
 
 ## How it works
