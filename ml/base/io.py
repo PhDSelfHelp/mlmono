@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tf.data import Dataset
 
-from ml.base.io_utils import find_tfrecords_in_dir
+from ml.base.io_utils import find_tfrecords_in_dir, create_dir_if_not_exist
 
 
 class MLIO(object):
@@ -41,6 +41,12 @@ class MLIO(object):
         # Logs and summary saving configs for tf.summary.FileWriter.
         self.logs_dir = self.io_config.logs_dir
         self.logs_flush_secs = getattr(self.io_config, 'logs_flush_secs', 120)
+
+        # Model saving configs for tf.estimator checkpoints.
+        self.model_dir = io_config.model_dir
+
+        create_dirs_if_not_exist(self.model_dir)
+        create_dirs_if_not_exist(self.logs_dir)
 
     @classmethod
     def from_config(cls, io_config):

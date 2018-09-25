@@ -2,7 +2,12 @@ graph:
     graph_name: mnist_graph
 
 io:
-    io_name: DefaultIO
-    
-    INTERLEAVE_BLOCK = 1
-    INTERLEAVE_CYCLE = 100
+    io_name: MNIST
+    data_dir: mnist/data/
+    logs_dir: mnist/run_0/logs
+    model_dir: mnist/run_0/model
+
+
+    # Constants for concurrent data file reading.
+    INTERLEAVE_BLOCK: 1
+    INTERLEAVE_CYCLE: 100

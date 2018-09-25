@@ -1,0 +1,6 @@
+graph:
+    graph_name: AlexNet
+
+    drop_out_keep_prob: 0.5
+    global_pool: false
+
