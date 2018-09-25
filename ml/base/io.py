@@ -24,11 +24,15 @@ class MLIO(object):
         self.summary_writer = None
 
         # Data reading configs for tf.data.TFRecordDataset.
-        self.data_enable_download = getattr(self.io_config, 'data_enable_download', False)
+        self.data_enable_download = getattr(self.io_config,
+                                            'data_enable_download', False)
         self.batch_size = self.io_config.batch_size
-        self.interleave_block = getattr(self.io_config, 'interleave_block', INTERLEAVE_BLOCK)
-        self.interleave_cycle = getattr(self.io_config, 'interleave_cycle', INTERLEAVE_CYCLE)
-        self.data_file_pattern = getattr(self.io_config, 'data_file_pattern', DATA_FILE_PATTERN)
+        self.interleave_block = getattr(self.io_config, 'interleave_block',
+                                        INTERLEAVE_BLOCK)
+        self.interleave_cycle = getattr(self.io_config, 'interleave_cycle',
+                                        INTERLEAVE_CYCLE)
+        self.data_file_pattern = getattr(self.io_config, 'data_file_pattern',
+                                         DATA_FILE_PATTERN)
         self.data_dir = getattr(self.io_config, 'data_dir', None)
 
         self.filenames = getattr(self.io_config, 'filenames', None)
@@ -76,21 +80,23 @@ class MLIO(object):
 
 
 class TFRecordIO(MLIO):
+
     @classmethod
     def from_config(cls, io_config):
         io = cls(io_config)
-        io.summary_writer = tf.summary.FileWriter(self.logs_dir,
-                                                  graph=tf.get_default_graph()
-                                                 )
+        io.summary_writer = tf.summary.FileWriter(
+            self.logs_dir, graph=tf.get_default_graph())
         return io
 
     def gen_input_fn(self, num_epochs):
+
         def input_fn():
             self.iterator = self.dataset.make_one_shot_iterator()
 
             data_ite = iterator.get_next()
             features, labels = self.parse_data(data_ite)
             return features, labels
+
         return input_fn
 
     def _gen_tf_dataset(self):
@@ -103,9 +109,7 @@ class TFRecordIO(MLIO):
             tf.contrib.data.parallel_interleave(
                 lambda filename: self.parse_file(filename),
                 cycle_length=self.interleave_cycle,
-                block_length=self.interleave_block
-            )
-        )
+                block_length=self.interleave_block))
 
         # The data_shuffle_buffer should be some value > rows in single data shard (record).
         dataset = dataset.batch(batch_size=self.batch_size)
@@ -129,16 +133,17 @@ class TFRecordIO(MLIO):
 
 
 class KerasDatasetIO(MLIO):
+
     @classmethod
     def from_config(cls, io_config):
         io = cls(io_config)
-        io.summary_writer = tf.summary.FileWriter(self.logs_dir,
-                                                  graph=tf.get_default_graph()
-                                                 )
+        io.summary_writer = tf.summary.FileWriter(
+            self.logs_dir, graph=tf.get_default_graph())
         io.dataset = _gen_tf_dataset(load_data_func)
         return io
 
     def gen_input_fn(self, num_epochs):
+
         def input_fn():
             x = np.arange(4).reshape(-1, 1).astype('float32')
             ds_x = Dataset.from_tensor_slices(x).repeat().batch(self.batch_size)
@@ -152,6 +157,7 @@ class KerasDatasetIO(MLIO):
             data_ite = iterator.get_next()
             features, labels = self.parse_data(data_ite)
             return features, labels
+
         return input_fn
 
     def _gen_tf_dataset(keras_dataset):

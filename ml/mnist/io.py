@@ -2,6 +2,7 @@ from ml.base import DefaultIO
 
 
 class MNIST(DefaultIO):
+
     @staticmethod
     def parse_file(filename):
         return data_chunk
