@@ -1,4 +1,4 @@
 munch~=2.3.2
 numpy>=1.15
 tensorflow-gpu~=1.8.0
-yapfu
+yapf
