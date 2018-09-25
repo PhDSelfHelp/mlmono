@@ -4,6 +4,7 @@ from ml.base import MLGraph, MLTrainer
 
 
 class MLEstimator(object):
+
     def __init__(self, config, graph, trainer, predictor, metrics, io):
         self.config = config
         self.graph = graph
@@ -36,6 +37,7 @@ class MLEstimator(object):
         return estimator
 
     def _gen_model_fn(self):
+
         def model_fn(features, labels, mode, params):
             is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
@@ -54,11 +56,13 @@ class MLEstimator(object):
                 loss=self.train,
                 train_op=self.trainer.train_op,
                 training_hooks=self.trainer.train_hooks,
-                eval_metric_ops=metrics
-            )
+                eval_metric_ops=metrics)
+
         return model_fn
 
     def _gen_input_fn(self):
+
         def input_fn(features, labels, mode, params):
             pass
+
         return input_fn

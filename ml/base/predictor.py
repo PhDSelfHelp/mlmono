@@ -2,6 +2,7 @@ import tensorflow as tf
 
 
 class MLPredictor(object):
+
     def __init__(self, global_config):
         self.global_config = global_config
         self.predictor_config = global_config.predictor

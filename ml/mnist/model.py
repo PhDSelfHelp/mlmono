@@ -4,6 +4,7 @@ from ml.base import MLGraph
 
 
 class AlexNet(MLGraph):
+
     def __init__(self, graph_config):
         self.graph_config = graph_config
         self.input = None
