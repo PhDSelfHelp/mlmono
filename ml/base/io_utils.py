@@ -1,12 +1,12 @@
-import glob
 import os
+import tensorflow as tf
 
 
 def find_tfrecords_in_dir(data_dir, file_pattern):
     expr = os.path.join(data_dir, file_pattern)
-    return glob.glob(expr)
+    return tf.gfile.Glob(filename)
 
-def create_dir_if_not_exist(path):
-    # os.makedirs does recursive dir creation for path if not exist.
-    # This does not take a list of paths as input.
-    os.makedirs(path, exist_ok=True)
+def create_dir_if_not_exist(dirname):
+    # os.makedirs does recursive dir creation for dirname if not exist.
+    # This does not take a list of dirs as input.
+    tf.gfile.MakeDirs(dirname)
