@@ -3,7 +3,9 @@ import yaml
 
 # add overwriting with double underscore functionality
 
+
 class MLConfig(object):
+
     @classmethod
     def from_file(cls, fn):
         '''
@@ -13,11 +15,8 @@ class MLConfig(object):
         with open(fn, 'r') as file:
             content = yaml.load(file)
         config = munch.munchify(content)
-        return MLConfig(config.model,
-                        config.trainer,
-                        config.evaluator,
-                        config.io,
-                        config.metric)
+        return MLConfig(config.model, config.trainer, config.evaluator,
+                        config.io, config.metric)
 
     @classmethod
     def from_internal_file(cls, config_name):

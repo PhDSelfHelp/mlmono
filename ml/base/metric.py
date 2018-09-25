@@ -2,6 +2,7 @@ from ml.base.base_utils import find_subclass_by_name
 
 
 class MLMetric(object):
+
     def __init__(self):
         pass
 
