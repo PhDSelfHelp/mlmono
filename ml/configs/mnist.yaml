@@ -1,3 +1,5 @@
+mode: train
+
 graph:
     graph_name: mnist_graph
 
