@@ -3,10 +3,11 @@ graph:
 
 io:
     io_name: MNIST
+
+    data_enable_download: false
     data_dir: mnist/data/
     logs_dir: mnist/run_0/logs
     model_dir: mnist/run_0/model
-
 
     # Constants for concurrent data file reading.
     INTERLEAVE_BLOCK: 1

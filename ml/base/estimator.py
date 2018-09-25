@@ -19,11 +19,11 @@ class MLEstimator(object):
 
     @classmethod
     def from_config(cls, config):
-        graph = MLGraph.from_config(config.graph)
-        trainer = MLTrainer.from_config(config.trainer)
-        predictor = MLPredictor.from_config(config.predictor)
-        metric = MLMetric.from_config(config.metric)
-        io = MLIO.from_config(config.io)
+        graph = MLGraph.from_config(config)
+        trainer = MLTrainer.from_config(config)
+        predictor = MLPredictor.from_config(config)
+        metric = MLMetric.from_config(config)
+        io = MLIO.from_config(config)
 
         return cls(config, model, trainer, predictor, metric, io)
 
