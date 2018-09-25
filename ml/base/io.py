@@ -5,7 +5,7 @@ from ml.base.io_utils import find_tfrecords_in_dir, create_dir_if_not_exist
 
 
 class MLIO(object):
-    # IO Hyperparmaeters:
+    # DEFAULT IO Hyperparmaeters listed here as constants:
     # INTERLEAVE_BLOCK -> how many continous data from one single file.
     # INTERLEAVE_CYCLE -> how many concurrent open files.
     # See https://www.tensorflow.org/performance/datasets_performance.
@@ -45,16 +45,23 @@ class MLIO(object):
         # Model saving configs for tf.estimator checkpoints.
         self.model_dir = io_config.model_dir
 
+        # Generate dirs.
         create_dirs_if_not_exist(self.model_dir)
         create_dirs_if_not_exist(self.logs_dir)
 
-        self.download_data_if_not_exist(self.data_dir)
+        # Generate tf dataset.
+        if data_enable_download:
+            self.download_data_if_not_exist(self.data_dir)
+        self.dataset = self._gen_tf_dataset()
 
     @classmethod
     def from_config(cls, global_config):
         io_config = global_config.io
         subcls = find_subclass_by_name(cls, io_config.io_name)
         return subcls.from_config(global_config)
+
+    def _gen_tf_dataset(self):
+        raise NotImplementedError
 
     def gen_input_fn(self, num_epochs):
         raise NotImplementedError
@@ -75,37 +82,36 @@ class TFRecordIO(MLIO):
         io.summary_writer = tf.summary.FileWriter(self.logs_dir,
                                                   graph=tf.get_default_graph()
                                                  )
-        io.dataset = tf.data.TFRecordDataset(self.filenames,
-                                             buffer_size=None,
-                                             num_parallel_reads=None,
-                                            )
         return io
 
     def gen_input_fn(self, num_epochs):
         def input_fn():
-            list_files = Dataset.list_files(self.filenames)
-            list_files = list_files.shuffle(self.io_config.fn_shuffle_buffer)
-
-            # Parallel_interleave is preferred as it's deterministic in ordering,
-            # this ensures better reproducibility.
-            self.dataset = list_files.apply(
-                tf.contrib.data.parallel_interleave(
-                    lambda filename: self.parse_file(filename),
-                    cycle_length=INTERLEAVE_CYCLE,
-                    block_length=INTERLEAVE_BLOCK
-                )
-            )
-
-            # The data_shuffle_buffer should be some value > rows in single data shard (record).
-            self.dataset = dataset.batch(batch_size=self.batch_size)
-            self.dataset = dataset.shuffle(self.io_config.data_shuffle_buffer)
-            self.dataset = dataset.repeat(num_epochs)
-            self.iterator = dataset.make_one_shot_iterator()
+            self.iterator = self.dataset.make_one_shot_iterator()
 
             data_ite = iterator.get_next()
             features, labels = self.parse_data(data_ite)
             return features, labels
         return input_fn
+
+    def _gen_tf_dataset(self):
+        list_files = Dataset.list_files(self.filenames)
+        list_files = list_files.shuffle(self.io_config.fn_shuffle_buffer)
+
+        # Parallel_interleave is preferred as it's deterministic in ordering,
+        # this ensures better reproducibility.
+        dataset = list_files.apply(
+            tf.contrib.data.parallel_interleave(
+                lambda filename: self.parse_file(filename),
+                cycle_length=self.interleave_cycle,
+                block_length=self.interleave_block
+            )
+        )
+
+        # The data_shuffle_buffer should be some value > rows in single data shard (record).
+        dataset = dataset.batch(batch_size=self.batch_size)
+        dataset = dataset.shuffle(self.io_config.data_shuffle_buffer)
+        dataset = dataset.repeat(num_epochs)
+        return dataset
 
     @staticmethod
     def parse_file(filename):
@@ -148,7 +154,7 @@ class KerasDatasetIO(MLIO):
             return features, labels
         return input_fn
 
-    def _gen_tf_dataset(keras_dataset, mode):
+    def _gen_tf_dataset(keras_dataset):
         '''Construct a data generator using `tf.Dataset`. '''
 
         def map_fn(image, label):
@@ -159,6 +165,7 @@ class KerasDatasetIO(MLIO):
 
         dataset = tf.data.Dataset.from_tensor_slices((images, labels))
 
+        mode = self.global_config.mode
         is_training = (mode == tf.estimator.ModeKeys.TRAIN)
         if is_training:
             dataset = dataset.shuffle(self.data_shuffle_buffer)
