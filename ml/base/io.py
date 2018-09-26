@@ -52,22 +52,13 @@ class MLIO(object):
                     msg = "data_dir and filenames must have one and only one defined in config::io."
                     raise ValueError(msg)
                 self.filenames = find_tfrecords_in_dir(self.data_dir, self.data_dir)
-<<<<<<< HEAD
-<<<<<<< 980fdf22fc2614edf2216c3a5e3cb5c3db59cd07
 
         # Model saving configs for tf.estimator checkpoints.
         self.model_dir = self.io_config.model_dir
-=======
->>>>>>> finally add first passing unit test
-=======
->>>>>>> d1bc0cc97f77097112fd542b8af333157c568f41
 
         # Logs and summary saving configs for tf.summary.FileWriter.
         self.logs_dir = self.io_config.logs_dir
         self.logs_flush_secs = getattr(self.io_config, 'logs_flush_secs', 120)
-
-        # Model saving configs for tf.estimator checkpoints.
-        self.model_dir = self.io_config.model_dir
 
         # Generate dirs.
         create_dir_if_not_exist(self.model_dir)
