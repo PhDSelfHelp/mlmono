@@ -26,6 +26,7 @@ install:
   - pip$PY install flake8
   - pip$PY install pylint
   - pip$PY install coveralls
+  - python setup.py develop
 
 script:
   - pytest ml/ --cov ml
