@@ -1,3 +1,5 @@
+from ml.base.config import MLConfig
+
 from ml.base.graph import MLGraph
 
 from ml.base.trainer import MLTrainer

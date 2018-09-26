@@ -1,5 +1,7 @@
 import tensorflow as tf
 
+from ml.base.base_utils import find_subclass_by_name
+
 
 class MLPredictor(object):
 
