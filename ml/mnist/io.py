@@ -25,4 +25,3 @@ class MNIST_Keras(KerasDatasetIO):
         x = tf.reshape(tf.cast(features, tf.float32), (28, 28, 1))
         y = tf.one_hot(tf.cast(label, tf.uint8), _NUM_CLASSES)
         return x, y
-

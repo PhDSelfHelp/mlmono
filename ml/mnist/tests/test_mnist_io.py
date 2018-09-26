@@ -22,3 +22,8 @@ class TestMNIST_Keras(unittest.TestCase):
 
     def test_from_config(self):
         mnist_io = MLIO.from_config(self.mock_config)
+
+    def test_gen_input_fn(self):
+        num_epochs = 3
+        mnist_io = MLIO.from_config(self.mock_config)
+        mnist_io.gen_input_fn(3)
