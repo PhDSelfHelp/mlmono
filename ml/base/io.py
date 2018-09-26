@@ -19,6 +19,8 @@ class MLIO(object):
         self.global_config = global_config
         self.io_config = global_config.io
 
+        self.mode = self.global_config.mode
+
         self.dataset = None
         self.iterator = None
         self.summary_writer = None
@@ -94,7 +96,7 @@ class TFRecordIO(MLIO):
             self.iterator = self.dataset.make_one_shot_iterator()
 
             data_ite = iterator.get_next()
-            features, labels = self.parse_data(data_ite)
+            features, labels = self.parse_iter(data_ite)
             return features, labels
 
         return input_fn
@@ -123,7 +125,7 @@ class TFRecordIO(MLIO):
         return data_chunk
 
     @staticmethod
-    def parse_data(data_chunk):
+    def parse_iter(data_chunk):
         raise NotImplementedError
         return features, labels
 
@@ -145,39 +147,33 @@ class KerasDatasetIO(MLIO):
     def gen_input_fn(self, num_epochs):
 
         def input_fn():
-            x = np.arange(4).reshape(-1, 1).astype('float32')
-            ds_x = Dataset.from_tensor_slices(x).repeat().batch(self.batch_size)
-            it_x = ds_x.make_one_shot_iterator()
-
-            y = np.arange(5, 9).reshape(-1, 1).astype('float32')
-            ds_y = Dataset.from_tensor_slices(y).repeat().batch(self.batch_size)
-            it_y = ds_y.make_one_shot_iterator()
-
-            iterator = dataset.make_one_shot_iterator()
+            iterator = self.dataset.make_one_shot_iterator()
             data_ite = iterator.get_next()
-            features, labels = self.parse_data(data_ite)
+            features, labels = self.parse_iter(data_ite)
             return features, labels
 
         return input_fn
 
-    def _gen_tf_dataset(keras_dataset):
-        '''Construct a data generator using `tf.Dataset`. '''
-
-        def map_fn(image, label):
-            '''Preprocess raw data to trainable input. '''
-            x = tf.reshape(tf.cast(image, tf.float32), (28, 28, 1))
-            y = tf.one_hot(tf.cast(label, tf.uint8), _NUM_CLASSES)
-            return x, y
-
+    def _gen_tf_dataset(self):
+        '''Construct a tf dataset using `tf.Dataset`. '''
+        images, labels = self.keras_load_data(self.mode)
         dataset = tf.data.Dataset.from_tensor_slices((images, labels))
 
         mode = self.global_config.mode
         is_training = (mode == tf.estimator.ModeKeys.TRAIN)
         if is_training:
             dataset = dataset.shuffle(self.data_shuffle_buffer)
-        dataset = dataset.map(map_fn)
+        dataset = dataset.map(self.parse_keras_tensor)
         dataset = dataset.batch(self.batch_size)
         dataset = dataset.repeat()
         dataset = dataset.prefetch(tf.contrib.data.AUTOTUNE)
 
         return dataset
+
+    @staticmethod
+    def parse_keras_tensor(features, labels):
+        raise NotImplementedError
+
+    @staticmethod
+    def keras_load_data(mode):
+        raise NotImplementedError
