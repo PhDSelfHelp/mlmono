@@ -6,6 +6,10 @@ import tensorflow as tf
 from tensorflow.python.training import session_run_hook
 
 
+def is_training(mode):
+    return mode == tf.estimator.ModeKeys.TRAIN
+
+
 class ExamplesPerSecondHook(session_run_hook.SessionRunHook):
     """Hook to print out examples per second.
       Total time is tracked and then divided by the total number of steps
