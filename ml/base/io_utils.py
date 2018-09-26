@@ -4,7 +4,7 @@ import tensorflow as tf
 
 def find_tfrecords_in_dir(data_dir, file_pattern):
     expr = os.path.join(data_dir, file_pattern)
-    return tf.gfile.Glob(filename)
+    return tf.gfile.Glob(expr)
 
 
 def create_dir_if_not_exist(dirname):

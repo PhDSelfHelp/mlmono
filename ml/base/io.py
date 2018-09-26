@@ -64,11 +64,6 @@ class MLIO(object):
         create_dir_if_not_exist(self.model_dir)
         create_dir_if_not_exist(self.logs_dir)
 
-        # Generate tf dataset.
-        if self.data_enable_download:
-            self.download_data_if_not_exist(self.data_dir)
-        self.dataset = self._gen_tf_dataset()
-
     @classmethod
     def from_config(cls, global_config):
         io_config = global_config.io
@@ -96,10 +91,14 @@ class TFRecordIO(MLIO):
     def from_config(cls, io_config):
         io = cls(io_config)
         io.summary_writer = tf.summary.FileWriter(
-            self.logs_dir, graph=tf.get_default_graph())
+            io.logs_dir, graph=tf.get_default_graph())
         return io
 
     def gen_input_fn(self, num_epochs):
+        # Generate tf dataset.
+        if self.data_enable_download:
+            self.download_data_if_not_exist(self.data_dir)
+        self.dataset = self._gen_tf_dataset()
 
         def input_fn():
             self.iterator = self.dataset.make_one_shot_iterator()
@@ -156,6 +155,7 @@ class KerasDatasetIO(MLIO):
         return io
 
     def gen_input_fn(self, num_epochs):
+        self.dataset = self._gen_tf_dataset()
 
         def input_fn():
             iterator = self.dataset.make_one_shot_iterator()
