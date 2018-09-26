@@ -2,7 +2,6 @@
     models/tutorials/image/cifar10_estimator/cifar10_utils.py
 '''
 
-
 import tensorflow as tf
 from tensorflow.python.training import session_run_hook
 
@@ -19,7 +18,8 @@ class ExamplesPerSecondHook(session_run_hook.SessionRunHook):
             self,
             batch_size,
             every_n_steps=100,
-            every_n_secs=None,):
+            every_n_secs=None,
+    ):
         """Initializer for ExamplesPerSecondHook.
           Args:
           batch_size: Total batch size used to calculate examples/second from

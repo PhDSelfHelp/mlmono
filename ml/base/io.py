@@ -2,6 +2,7 @@ import tensorflow as tf
 
 
 class MLIO(object):
+
     def __init__(self, io_config):
         self.io_config = io_config
 
