@@ -24,6 +24,7 @@ install:
   - pip$PY install pytest
   - pip$PY install pytest-cov
   - pip$PY install coveralls
+  - python setup.py develop
 
 script: pytest ml/ --cov ml
 
