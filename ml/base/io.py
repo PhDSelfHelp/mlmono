@@ -1,7 +1,8 @@
 import tensorflow as tf
-from tf.data import Dataset
 
+from ml.base.base_utils import find_subclass_by_name
 from ml.base.io_utils import find_tfrecords_in_dir, create_dir_if_not_exist
+from ml.base.trainer_utils import is_training
 
 
 class MLIO(object):
@@ -10,10 +11,12 @@ class MLIO(object):
     # INTERLEAVE_CYCLE -> how many concurrent open files.
     # See https://www.tensorflow.org/performance/datasets_performance.
 
+    DATA_FILE_PATTERN = "*.tfrecord"
+
     INTERLEAVE_BLOCK = 1
     INTERLEAVE_CYCLE = 100
+    DATA_SHUFFLE_BUFFER = 128
 
-    DATA_FILE_PATTERN = "*.tfrecord"
 
     def __init__(self, global_config):
         self.global_config = global_config
@@ -29,34 +32,40 @@ class MLIO(object):
         self.data_enable_download = getattr(self.io_config,
                                             'data_enable_download', False)
         self.batch_size = self.io_config.batch_size
-        self.interleave_block = getattr(self.io_config, 'interleave_block',
-                                        INTERLEAVE_BLOCK)
-        self.interleave_cycle = getattr(self.io_config, 'interleave_cycle',
-                                        INTERLEAVE_CYCLE)
         self.data_file_pattern = getattr(self.io_config, 'data_file_pattern',
-                                         DATA_FILE_PATTERN)
+                                         MLIO.DATA_FILE_PATTERN)
+        self.interleave_block = getattr(self.io_config, 'interleave_block',
+                                        MLIO.INTERLEAVE_BLOCK)
+        self.interleave_cycle = getattr(self.io_config, 'interleave_cycle',
+                                        MLIO.INTERLEAVE_CYCLE)
+        self.data_shuffle_buffer = getattr(self.io_config, 'data_shuffle_buffer',
+                                           MLIO.DATA_SHUFFLE_BUFFER)
+
         self.data_dir = getattr(self.io_config, 'data_dir', None)
 
         self.filenames = getattr(self.io_config, 'filenames', None)
-        if not self.filenames:
-            if not self.data_dir:
-                msg = "data_dir and filenames must have one and only one defined in config::io."
-                raise ValueError(msg)
-            self.filenames = find_tfrecords_in_dir(data_dir, self.data_dir)
+
+        # KerasDatasetIO doesn't need any filenames or data_dir
+        if not isinstance(self, KerasDatasetIO):
+            if not self.filenames:
+                if not self.data_dir:
+                    msg = "data_dir and filenames must have one and only one defined in config::io."
+                    raise ValueError(msg)
+                self.filenames = find_tfrecords_in_dir(self.data_dir, self.data_dir)
 
         # Logs and summary saving configs for tf.summary.FileWriter.
         self.logs_dir = self.io_config.logs_dir
         self.logs_flush_secs = getattr(self.io_config, 'logs_flush_secs', 120)
 
         # Model saving configs for tf.estimator checkpoints.
-        self.model_dir = io_config.model_dir
+        self.model_dir = self.io_config.model_dir
 
         # Generate dirs.
-        create_dirs_if_not_exist(self.model_dir)
-        create_dirs_if_not_exist(self.logs_dir)
+        create_dir_if_not_exist(self.model_dir)
+        create_dir_if_not_exist(self.logs_dir)
 
         # Generate tf dataset.
-        if data_enable_download:
+        if self.data_enable_download:
             self.download_data_if_not_exist(self.data_dir)
         self.dataset = self._gen_tf_dataset()
 
@@ -102,8 +111,9 @@ class TFRecordIO(MLIO):
         return input_fn
 
     def _gen_tf_dataset(self):
-        list_files = Dataset.list_files(self.filenames)
-        list_files = list_files.shuffle(self.io_config.fn_shuffle_buffer)
+        list_files = tf.data.Dataset.list_files(self.filenames)
+        if is_training(self.mode):
+            list_files = list_files.shuffle(self.io_config.fn_shuffle_buffer)
 
         # Parallel_interleave is preferred as it's deterministic in ordering,
         # this ensures better reproducibility.
@@ -115,7 +125,8 @@ class TFRecordIO(MLIO):
 
         # The data_shuffle_buffer should be some value > rows in single data shard (record).
         dataset = dataset.batch(batch_size=self.batch_size)
-        dataset = dataset.shuffle(self.io_config.data_shuffle_buffer)
+        if is_training(self.mode):
+            dataset = dataset.shuffle(self.io_config.data_shuffle_buffer)
         dataset = dataset.repeat(num_epochs)
         return dataset
 
@@ -140,8 +151,8 @@ class KerasDatasetIO(MLIO):
     def from_config(cls, io_config):
         io = cls(io_config)
         io.summary_writer = tf.summary.FileWriter(
-            self.logs_dir, graph=tf.get_default_graph())
-        io.dataset = _gen_tf_dataset(load_data_func)
+            io.logs_dir, graph=tf.get_default_graph())
+        io.dataset = io._gen_tf_dataset()
         return io
 
     def gen_input_fn(self, num_epochs):
@@ -159,9 +170,7 @@ class KerasDatasetIO(MLIO):
         images, labels = self.keras_load_data(self.mode)
         dataset = tf.data.Dataset.from_tensor_slices((images, labels))
 
-        mode = self.global_config.mode
-        is_training = (mode == tf.estimator.ModeKeys.TRAIN)
-        if is_training:
+        if is_training(self.mode):
             dataset = dataset.shuffle(self.data_shuffle_buffer)
         dataset = dataset.map(self.parse_keras_tensor)
         dataset = dataset.batch(self.batch_size)
