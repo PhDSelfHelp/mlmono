@@ -51,7 +51,7 @@ class MLIO(object):
                 if not self.data_dir:
                     msg = "data_dir and filenames must have one and only one defined in config::io."
                     raise ValueError(msg)
-                self.filenames = find_tfrecords_in_dir(self.data_dir, self.data_dir)
+                self.filenames = find_tfrecords_in_dir(self.data_dir, self.data_file_pattern)
 
         # Model saving configs for tf.estimator checkpoints.
         self.model_dir = self.io_config.model_dir

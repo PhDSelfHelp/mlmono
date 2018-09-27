@@ -9,9 +9,9 @@ io:
     io_name: KittiSqueezeSegIO
 
     data_enable_download: false
-    data_dir: data
-    logs_dir: tmp/run_0/logs
-    model_dir: tmp/run_0/model
+    data_dir: data/kitti_squeezeseg
+    logs_dir: /tmp/run_0/logs
+    model_dir: /tmp/run_0/model
 
     batch_size: 24
     fn_shuffle_buffer: 100
