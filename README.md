@@ -1,5 +1,7 @@
 # mlmono
 ![](https://travis-ci.com/PhDSelfHelp/mlmono.svg?branch=master)
+[![](https://codecov.io/gh/PhDSelfHelp/mlmono/branch/master/graph/badge.svg)](https://codecov.io/gh/PhDSelfHelp/mlmono)
+
 Mono repo for all machine learning work.
 For now this package rely on the tensorflow estimator feature.
 
