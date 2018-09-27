@@ -5,7 +5,7 @@ class MLMetric(object):
 
     def __init__(self, global_config):
         self.global_config = global_config
-        self.metric_config = global_config.metric
+        self.metric_config = self.global_config.metric
 
     @classmethod
     def from_config(cls, global_config):

@@ -23,10 +23,13 @@ install:
   - pip$PY install -r requirements.txt
   - pip$PY install pytest
   - pip$PY install pytest-cov
+  - pip$PY install flake8
+  - pip$PY install pylint
   - pip$PY install coveralls
   - python setup.py develop
 
-script: pytest ml/ --cov ml
-
+script:
+  - pytest ml/ --cov ml
+  - flake8 --ignore=C408,E121,E123,E126,E226,E24,E704,W503,W504
 after_success:
-- coveralls
+  - coveralls

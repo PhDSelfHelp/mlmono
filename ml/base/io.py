@@ -20,7 +20,7 @@ class MLIO(object):
 
     def __init__(self, global_config):
         self.global_config = global_config
-        self.io_config = global_config.io
+        self.io_config = self.global_config.io
 
         self.mode = self.global_config.mode
 
