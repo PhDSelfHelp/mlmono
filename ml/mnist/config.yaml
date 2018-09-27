@@ -1,0 +1,19 @@
+mode: train
+
+
+graph:
+    graph_name: AlexNet
+
+    drop_out_keep_prob: 0.5
+    global_pool: false
+
+
+io:
+    io_name: MNIST_Keras
+
+    data_enable_download: false
+    data_dir: mnist/data/
+    logs_dir: mnist/run_0/logs
+    model_dir: mnist/run_0/model
+
+

@@ -6,10 +6,12 @@ from ml.base.base_utils import find_subclass_by_name
 
 class MLTrainer(object):
 
-    def __init__(self, trainer_config):
+    def __init__(self, global_config):
+        self.global_config = global_config
+        self.trainer_config = self.global_config.trainer
+
         self._graph_output = None
 
-        self.trainer_config = trainer_config
         self.train_hooks = []
         self.train_ops = []
 
@@ -17,9 +19,10 @@ class MLTrainer(object):
         self.optimizer = None
 
     @classmethod
-    def from_config(cls, trainer_config):
+    def from_config(cls, global_config):
+        trainer_config = global_config.trainer
         subcls = find_subclass_by_name(cls, trainer_config.trainer_name)
-        return subcls.from_config(trainer_config)
+        return subcls.from_config(global_config)
 
     def register_loss_to_graph(self, graph):
         raise NotImplementedError
