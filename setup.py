@@ -9,11 +9,9 @@ setup(
     version='0.0.1',
     url='https://github.com/PhDSelfHelp/mlmono',
     author='Chengyu Dai, Jiaxing Wu, Zhen Xu',
-
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
-
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],

@@ -4,7 +4,11 @@ from ml.base.base_utils import find_subclass_by_name
 
 
 class MLGraph(object):
-    def __init__(self):
+
+    def __init__(self, global_config):
+        self.global_config = global_config
+        self.graph_config = self.global_config.graph_config
+
         self.input = None
         self.output = None
 

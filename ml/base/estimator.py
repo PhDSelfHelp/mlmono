@@ -1,9 +1,10 @@
 import tensorflow as tf
 
-from ml.base import MLGraph, MLTrainer
+from ml.base import MLGraph, MLTrainer, MLPredictor, MLMetric, MLIO
 
 
 class MLEstimator(object):
+
     def __init__(self, config, graph, trainer, predictor, metrics, io):
         self.config = config
         self.graph = graph
@@ -17,25 +18,38 @@ class MLEstimator(object):
         self.labels = None
         self.loss = None
 
+        def train():
+            self.estimator.train(
+                input_fn = self._gen_input_fn()
+            )
+
+        def predict():
+            self.estimator.predict(
+                input_fn = self._gen_input_fn()
+            )
+
+        self.train_fn = train
+        self.predict_fn = predict
+
     @classmethod
     def from_config(cls, config):
-        graph = MLGraph.from_config(config.graph)
-        trainer = MLTrainer.from_config(config.trainer)
-        predictor = MLPredictor.from_config(config.predictor)
-        metric = MLMetric.from_config(config.metric)
-        io = MLIO.from_config(config.io)
+        graph = MLGraph.from_config(config)
+        trainer = MLTrainer.from_config(config)
+        predictor = MLPredictor.from_config(config)
+        metric = MLMetric.from_config(config)
+        io = MLIO.from_config(config)
 
-        return cls(config, model, trainer, predictor, metric, io)
+        return cls(config, graph, trainer, predictor, metric, io)
 
     def _gen_estimator(self):
         estimator = tf.estimator.Estimator(
             model_fn=self._gen_model_fn(),
-            input_fn=self._gen_input_fn(),
             model_dir=self.io.model_dir,
         )
         return estimator
 
     def _gen_model_fn(self):
+
         def model_fn(features, labels, mode, params):
             is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
@@ -50,15 +64,17 @@ class MLEstimator(object):
             # Construct metrics.
             return tf.estimator.EstimatorSpec(
                 mode=mode,
-                predictions=self.ouput,
-                loss=self.train,
+                predictions=self.output,
+                loss=self.trainer.loss,
                 train_op=self.trainer.train_op,
                 training_hooks=self.trainer.train_hooks,
-                eval_metric_ops=metrics
-            )
+                eval_metric_ops=self.metrics)
+
         return model_fn
 
     def _gen_input_fn(self):
+
         def input_fn(features, labels, mode, params):
             pass
+
         return input_fn

@@ -1,3 +1,5 @@
-Munch~=2.3.2
-tensorflow-gpu~=1.8.0
+munch~=2.3.2
 numpy>=1.15
+tensorflow~=1.10.0
+yapf
+pyyaml
