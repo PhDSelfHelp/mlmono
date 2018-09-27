@@ -9,19 +9,17 @@ _CONFIG_PATH = os.path.join(os.getcwd(), 'configs/')
 @click.option('--config', help='The config file')
 def main(action, config):
     settings = MLConfig.from_file(os.path.join(_CONFIG_PATH, config))
+    # The command line action should override the one in config
+    settings.global_config.mode = action
     model = MLEstimator.from_config(settings)
-    def predict():
-        pass
-    def train():
-        pass
     action_case = {
-        'train': train,
-        'predict': predict
+        'train': model.train_fn,
+        'predict': model.predict_fn
     }
     try:
         action_case[action]()
     except KeyError:
         MSG = 'The ACTION argument should be among'
         for key in action_case.keys():
-            MSG + " '" + key + "' "
+            MSG = MSG + " '" + key + "' "
         print(MSG)
