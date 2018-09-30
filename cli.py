@@ -1,14 +1,12 @@
 import click
-import os
-from ml.base import MLConfig, MLEstimator
-
-_CONFIG_PATH = os.path.join(os.getcwd(), 'configs/')
+from ml.base import MLConfig
+from ml.base.estimator import MLEstimator
 
 @click.command()
 @click.argument('action')
 @click.option('--config', help='The config file')
 def main(action, config):
-    settings = MLConfig.from_file(os.path.join(_CONFIG_PATH, config))
+    settings = MLConfig.from_file(config)
     # The command line action should override the one in config
     settings.global_config.mode = action
     model = MLEstimator.from_config(settings)
@@ -19,7 +17,10 @@ def main(action, config):
     try:
         action_case[action]()
     except KeyError:
-        MSG = 'The ACTION argument should be among'
-        for key in action_case.keys():
-            MSG = MSG + " '" + key + "' "
-        print(MSG)
+        msg = 'The ACTION argument should be among'
+        for key in action_case:
+            msg = msg + " '" + key + "' "
+        raise(ValueError(msg))
+
+if __name__ == "__main__":
+    main()
