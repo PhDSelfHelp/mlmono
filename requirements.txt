@@ -1,3 +1,4 @@
+click
 munch~=2.3.2
 numpy>=1.15
 pyyaml
