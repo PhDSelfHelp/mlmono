@@ -20,16 +20,16 @@ class MLEstimator(object):
 
         def train():
             self.estimator.train(
-                input_fn = self._gen_input_fn()
+                input_fn = self.io.gen_input_fn(self.trainer.num_epochs)
             )
 
         def predict():
             self.estimator.predict(
-                input_fn = self._gen_input_fn()
+                input_fn = self.io.gen_input_fn(self.predictor.num_epochs)
             )
 
-        self.train_fn = train
-        self.predict_fn = predict
+        self.train = train
+        self.predict = predict
 
     @classmethod
     def from_config(cls, config):
