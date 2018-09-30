@@ -12,8 +12,8 @@ def main():
 @click.option('--config', help='The config file', required=True)
 def train(config):
     config = MLConfig.from_file(config)
-    # The command line action should override the one in config
     config.global_config.mode = 'train'
+    # TODO(jxwulittlebeans): The command line action should override the one in config.
     estimator = MLEstimator.from_config(config)
     estimator.train()
 
@@ -21,7 +21,6 @@ def train(config):
 @click.option('--config', help='The config file', required=True)
 def predict(config):
     config = MLConfig.from_file(config)
-    # The command line action should override the one in config
     config.global_config.mode = 'predict'
     estimator = MLEstimator.from_config(config)
     estimator.predict()
