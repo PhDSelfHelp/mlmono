@@ -1,5 +1,3 @@
-import tensorflow as tf
-
 from ml.base.base_utils import find_subclass_by_name
 
 
@@ -14,9 +12,9 @@ class MLGraph(object):
 
     @classmethod
     def from_config(cls, graph_config):
-        subcls = find_subclass_by_name(cls, graph_config.model_name)
+        subcls = find_subclass_by_name(cls, graph_config.graph_name)
         return subcls.from_config(graph_config)
 
-    def add_forward_pass(self, input):
+    def add_forward_pass(self, features):
         raise NotImplementedError
         return self.output

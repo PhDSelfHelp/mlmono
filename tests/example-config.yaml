@@ -1,0 +1,32 @@
+mode: train
+# The `mode` fielde should be overridden by the command line arguments but it's here to 
+# remind the user of the use of this config and for unit testing
+
+
+# `graph` field is required
+# graph.graph_name is required to find the model that the project wants to use
+# The rest of the parameters are the those defined by the specific graph
+graph:
+    graph_name: AlexNet
+
+
+# `io` must have `io_name` for the estimator to find the io module
+# All others are the specific parameters of the io module
+io:
+    io_name: KittiSqueezeSegIO
+
+    data_enable_download: false
+    data_dir: data/kitti_squeezeseg
+    logs_dir: /tmp/run_0/logs
+    model_dir: /tmp/run_0/model
+
+    batch_size: 24
+    fn_shuffle_buffer: 100
+
+trainer: null
+
+
+predictor: null
+
+
+metric: null
