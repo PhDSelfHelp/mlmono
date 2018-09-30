@@ -1,7 +1,0 @@
-Training:
-  BATCH_SIZE: 20
-
-Model:
-  MODEL_NAME: unet
-  NLAYERS: 3
-  PATCH_SIZE: 3
