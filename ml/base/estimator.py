@@ -1,6 +1,10 @@
 import tensorflow as tf
 
-from ml.base import MLGraph, MLTrainer, MLPredictor, MLMetric, MLIO
+from ml.base.graph import MLGraph
+from ml.base.trainer import MLTrainer
+from ml.base.predictor import MLPredictor
+from ml.base.metric import MLMetric
+from ml.base.io import MLIO
 
 
 class MLEstimator(object):
