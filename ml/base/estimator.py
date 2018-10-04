@@ -22,6 +22,19 @@ class MLEstimator(object):
         self.labels = None
         self.loss = None
 
+        def train():
+            self.estimator.train(
+                input_fn = self.io.gen_input_fn(self.trainer.num_epochs)
+            )
+
+        def predict():
+            self.estimator.predict(
+                input_fn = self.io.gen_input_fn(self.predictor.num_epochs)
+            )
+
+        self.train = train
+        self.predict = predict
+
     @classmethod
     def from_config(cls, config):
         graph = MLGraph.from_config(config)
@@ -30,12 +43,11 @@ class MLEstimator(object):
         metric = MLMetric.from_config(config)
         io = MLIO.from_config(config)
 
-        return cls(config, model, trainer, predictor, metric, io)
+        return cls(config, graph, trainer, predictor, metric, io)
 
     def _gen_estimator(self):
         estimator = tf.estimator.Estimator(
             model_fn=self._gen_model_fn(),
-            input_fn=self._gen_input_fn(),
             model_dir=self.io.model_dir,
         )
         return estimator
@@ -56,11 +68,11 @@ class MLEstimator(object):
             # Construct metrics.
             return tf.estimator.EstimatorSpec(
                 mode=mode,
-                predictions=self.ouput,
-                loss=self.train,
+                predictions=self.output,
+                loss=self.trainer.loss,
                 train_op=self.trainer.train_op,
                 training_hooks=self.trainer.train_hooks,
-                eval_metric_ops=metrics)
+                eval_metric_ops=self.metrics)
 
         return model_fn
 
