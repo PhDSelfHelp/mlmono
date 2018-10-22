@@ -39,8 +39,6 @@ class MLEstimator(object):
     def _gen_model_fn(self):
 
         def model_fn(features, labels, mode, params):
-            is_training = (mode == tf.estimator.ModeKeys.TRAIN)
-
             # Construct graph.
             self.output = self.graph.add_forward_pass()
 
