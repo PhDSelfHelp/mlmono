@@ -106,7 +106,7 @@ class KittiSqueezeSegIO(TFRecordIO):
             X = _create_composite_numpy(fn_list)
             self.np_to_tfrecords(X, outpath)
     
-    def np_to_tfrecords(self, X, file_path, verbose=False):
+    def np_to_tfrecords(self, X, file_path, verbose=True):
         """ Taken from https://gist.github.com/swyoon/8185b3dcf08ec728fb22b99016dd533f.
             Author: Sangwoong Yoon
 
@@ -147,6 +147,7 @@ class KittiSqueezeSegIO(TFRecordIO):
                                 Instaed got {}".format(ndarray.dtype))
 
         assert isinstance(X, np.ndarray)
+        num_frames = X.shape[-1]
 
         # Load appropriate tf.train.Feature class depending on dtype.
         dtype_feature_x = _dtype_feature(X)
@@ -154,17 +155,13 @@ class KittiSqueezeSegIO(TFRecordIO):
         # Generate tfrecord writer.
         writer = tf.python_io.TFRecordWriter(file_path)
         if verbose:
-            msg = "Serializing {:d} examples into {}".format(X.shape[0], result_tf_file)
+            msg = "Serializing {:d} frames into {}".format(num_frames, file_path)
             _logger.info(msg)
-
         lidar_mask = np.reshape(
             (X[:, :, KittiSqueezeSegIO.DEPTH_TAG] > 0), 
-            (self.zenith_level, self.azimuth_level, 1)
+            (self.zenith_level, self.azimuth_level, num_frames)
         )
-        lidar_input = np.reshape(
-            X[:, :, :KittiSqueezeSegIO.LABEL_TAG], 
-            (self.zenith_level, self.azimuth_level, 1)
-        )
+        lidar_input = X[:, :, :KittiSqueezeSegIO.LABEL_TAG]
         label = X[:, :, :KittiSqueezeSegIO.LABEL_TAG]
         weight = np.zeros(label.shape)
         for l in range(KittiSqueezeSegIO.NUM_CLASS):
@@ -182,7 +179,7 @@ class KittiSqueezeSegIO(TFRecordIO):
         writer.close()
 
         if verbose:
-            _logger.info("Writing {} done!".format(result_tf_file))
+            _logger.info("Writing {} done!".format(file_path))
 
 def _group_numpy_fns(fn_list):
     # example filename: "2011_09_26_0091_0000000062.npy"
