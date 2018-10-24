@@ -1,10 +1,8 @@
 import click
 
-<<<<<<< HEAD
+import ml
 from ml.base import MLConfig
 from ml.base.estimator import MLEstimator
-=======
->>>>>>> ecce9a9b558cde58514a0e9a166e48dec2b474d2
 from ml.squeezeseg.cli import npy2tfrecord
 
 
@@ -12,7 +10,6 @@ from ml.squeezeseg.cli import npy2tfrecord
 def main():
     pass
 
-<<<<<<< HEAD
 @click.command()
 @click.option('--config', help='The config file', required=True)
 def train(config):
@@ -32,8 +29,6 @@ def predict(config):
 
 main.add_command(train)
 main.add_command(predict)
-=======
->>>>>>> ecce9a9b558cde58514a0e9a166e48dec2b474d2
 
 main.add_command(npy2tfrecord)
 

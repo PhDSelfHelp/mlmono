@@ -1,6 +1,7 @@
 def find_subclass_by_name(cls, subcls_name):
 
     def all_subclasses(cls):
+        print(cls, cls.__subclasses__())
         return set(cls.__subclasses__()).union(
             [s for c in cls.__subclasses__() for s in all_subclasses(c)])
 
