@@ -88,8 +88,9 @@ class MLIO(object):
 class TFRecordIO(MLIO):
 
     @classmethod
-    def from_config(cls, io_config):
-        io = cls(io_config)
+    def from_config(cls, global_config):
+        io_config = global_config.io
+        io = cls(global_config)
         io.summary_writer = tf.summary.FileWriter(
             io.logs_dir, graph=tf.get_default_graph())
         return io
@@ -147,8 +148,9 @@ class TFRecordIO(MLIO):
 class KerasDatasetIO(MLIO):
 
     @classmethod
-    def from_config(cls, io_config):
-        io = cls(io_config)
+    def from_config(cls, global_config):
+        io_config = global_config.io
+        io = cls(global_config)
         io.summary_writer = tf.summary.FileWriter(
             io.logs_dir, graph=tf.get_default_graph())
         io.dataset = io._gen_tf_dataset()
