@@ -127,59 +127,6 @@ class ModelSkeleton(object):
                 self._activation_summary(
                     self.prob[:, :, :, cls_id], 'prob_'+cls)
 
-    def _add_loss_graph(self):
-        """Define the loss operation."""
-        mc = self.mc
-
-        with tf.variable_scope('cls_loss') as scope:
-            self.cls_loss = tf.identity(
-                tf.reduce_sum(
-                    tf.nn.sparse_softmax_cross_entropy_with_logits(
-                        labels=tf.reshape(self.label, (-1, )),
-                        logits=tf.reshape(self.output_prob, (-1, mc.NUM_CLASS))
-                    )
-                    * tf.reshape(self.lidar_mask, (-1, ))
-                    * tf.reshape(self.loss_weight, (-1, ))
-                )/tf.reduce_sum(self.lidar_mask)*mc.CLS_LOSS_COEF,
-                name='cls_loss'
-            )
-            tf.add_to_collection('losses', self.cls_loss)
-
-        # add above losses as well as weight decay losses to form the total loss
-        self.loss = tf.add_n(tf.get_collection('losses'), name='total_loss')
-
-        # add loss summaries
-        # _add_loss_summaries(self.loss)
-        tf.summary.scalar(self.cls_loss.op.name, self.cls_loss)
-        tf.summary.scalar(self.loss.op.name, self.loss)
-
-    def _add_train_graph(self):
-        """Define the training operation."""
-        mc = self.mc
-
-        self.global_step = tf.Variable(0, name='global_step', trainable=False)
-        lr = tf.train.exponential_decay(mc.LEARNING_RATE,
-                                        self.global_step,
-                                        mc.DECAY_STEPS,
-                                        mc.LR_DECAY_FACTOR,
-                                        staircase=True)
-
-        tf.summary.scalar('learning_rate', lr)
-
-        opt = tf.train.MomentumOptimizer(
-            learning_rate=lr, momentum=mc.MOMENTUM)
-        grads_vars = opt.compute_gradients(self.loss, tf.trainable_variables())
-
-        with tf.variable_scope('clip_gradient') as scope:
-            for i, (grad, var) in enumerate(grads_vars):
-                grads_vars[i] = (tf.clip_by_norm(grad, mc.MAX_GRAD_NORM), var)
-
-        apply_gradient_op = opt.apply_gradients(
-            grads_vars, global_step=self.global_step)
-
-        with tf.control_dependencies([apply_gradient_op]):
-            self.train_op = tf.no_op(name='train')
-
     def _conv_bn_layer(
             self, inputs, conv_param_name, bn_param_name, scale_param_name, filters,
             size, stride, padding='SAME', freeze=False, relu=True,
@@ -484,13 +431,14 @@ class ModelSkeleton(object):
             )
             out_shape = out.get_shape().as_list()
             num_flops = \
-                (1+2*channels*size_h*size_w)*filters*out_shape[1]*out_shape[2]
+                (1 + 2 * channels * size_h * size_w) * filters \
+                * out_shape[1] * out_shape[2]
             if relu:
-                num_flops += 2*filters*out_shape[1]*out_shape[2]
+                num_flops += 2 * filters * out_shape[1] * out_shape[2]
             self.flop_counter.append((layer_name, num_flops))
 
             self.activation_counter.append(
-                (layer_name, out_shape[1]*out_shape[2]*out_shape[3])
+                (layer_name, out_shape[1] * out_shape[2] * out_shape[3])
             )
 
             return out

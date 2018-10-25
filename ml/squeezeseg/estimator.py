@@ -24,6 +24,7 @@ class SqueezeSegEstimator(MLEstimator):
 
             # Construct trainer.
             self.trainer.register_loss_to_graph(self.output, self.labels)
+            self.trainer.register_train_graph()
             self.trainer.register_op_and_hook()
             self.loss = self.trainer.loss
 

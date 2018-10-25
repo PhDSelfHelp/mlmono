@@ -19,6 +19,8 @@ io:
     azimuth_level: 512
     zenith_level: 64
 
+    CLASSES: ['unknown', 'car', 'pedestrian', 'cyclist']
+
 
 trainer: 
     cls_loss_coef: 15.0

@@ -100,7 +100,7 @@ def evaluate_iou(label, pred, n_class, epsilon=1e-12):
         fp = np.sum(label[pred == cls_id] != cls_id)
         fn = np.sum(pred[label == cls_id] != cls_id)
 
-        ious[cls_id] = tp/(tp+fn+fp+epsilon)
+        ious[cls_id] = tp / (tp + fn + fp + epsilon)
         tps[cls_id] = tp
         fps[cls_id] = fp
         fns[cls_id] = fn
@@ -112,7 +112,7 @@ def condensing_matrix(size_z, size_a, in_channel):
     assert size_z % 2 == 1 and size_a % 2 == 1, \
         'size_z and size_a should be odd number'
 
-    half_filter_dim = (size_z*size_a)//2
+    half_filter_dim = (size_z * size_a) // 2
 
     # moving neigboring pixels to channel dimension
     nbr2ch_mat = np.zeros(
@@ -128,8 +128,8 @@ def condensing_matrix(size_z, size_a, in_channel):
 
     # exclude the channel index corresponding to the center position
     nbr2ch_mat = np.concatenate(
-        [nbr2ch_mat[:, :, :, :in_channel*half_filter_dim],
-         nbr2ch_mat[:, :, :, in_channel*(half_filter_dim+1):]],
+        [nbr2ch_mat[:, :, :, :in_channel * half_filter_dim],
+         nbr2ch_mat[:, :, :, in_channel * (half_filter_dim + 1):]],
         axis=3
     )
 
@@ -165,11 +165,11 @@ def angular_filter_kernel(size_z, size_a, in_channel, theta_sqs):
         for i in range(size_z):
             for j in range(size_a):
                 diff = np.sum(
-                    (np.array([i-size_z//2, j-size_a//2]))**2)
-                kernel_2d[i, j] = np.exp(-diff/2/theta_sqs[k])
+                    (np.array([i - size_z // 2, j - size_a // 2]))**2)
+                kernel_2d[i, j] = np.exp(- diff / 2 / theta_sqs[k])
 
         # exclude the center position
-        kernel_2d[size_z//2, size_a//2] = 0
+        kernel_2d[size_z // 2, size_a // 2] = 0
         kernel[:, :, k, k] = kernel_2d
 
     return kernel

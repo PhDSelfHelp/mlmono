@@ -30,6 +30,9 @@ class MLTrainer(object):
     def register_op_and_hook(self):
         raise NotImplementedError
 
+    def register_train_graph(self, graph_output):
+        raise NotImplementedError
+
 
 class DefaultTrainer(MLTrainer):
 

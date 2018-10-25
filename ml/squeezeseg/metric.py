@@ -7,10 +7,9 @@ class Viz(object):
         self.ZENITH_LEVEL = global_config.dataset.ZENITH_LEVEL
         self.AZIMUTH_LEVEL = global_config.dataset.AZIMUTH_LEVEL
         
-    def _register_graph(self):
+    def register_to_graph(self):
         """Define the visualization operation."""
         BATCH_SIZE = self.BATCH_SIZE
-
         ZENITH_LEVEL = self.ZENITH_LEVEL
         AZIMUTH_LEVEL = self.AZIMUTH_LEVEL
 
@@ -36,21 +35,35 @@ class Viz(object):
                                           self.pred_image_to_show, collections='image_summary',
                                           max_outputs=BATCH_SIZE)
 
+        # Register IOU summaries.
+        iou_summary_placeholders = []
+        iou_summary_ops = []
+        for obj_cls in self.global_config.io.CLASSES:
+            ph = tf.placeholder(tf.float32, name=obj_cls+'_iou')
+            iou_summary_placeholders.append(ph)
+            iou_summary_ops.append(
+                tf.summary.scalar('Eval/' + obj_cls + '_iou',
+                                ph,
+                                collections='eval_summary')
+            )
+        self.iou_summary_placeholders = iou_summary_placeholders
+        self.iou_summary_ops = iou_summary_ops
 
-def _add_summary_ops(self):
-    """Add extra summary operations."""
-    mc = self.mc
 
-    iou_summary_placeholders = []
-    iou_summary_ops = []
+    def register_to_writer(self, summary_writer):
+        summary_writer.add_summary(summary_str, step)
 
-    for cls in mc.CLASSES:
-        ph = tf.placeholder(tf.float32, name=cls+'_iou')
-        iou_summary_placeholders.append(ph)
-        iou_summary_ops.append(
-            tf.summary.scalar('Eval/'+cls+'_iou', ph,
-                              collections='eval_summary')
-        )
+        for sum_str in iou_summary_list:
+            summary_writer.add_summary(sum_str, step)
 
-    self.iou_summary_placeholders = iou_summary_placeholders
-    self.iou_summary_ops = iou_summary_ops
+        for viz_sum in viz_summary_list:
+            summary_writer.add_summary(viz_sum, step)
+
+        # force tensorflow to synchronise summaries
+        summary_writer.flush()
+
+    def _add_summary_ops(self):
+        """Add extra summary operations."""
+        mc = self.mc
+
+

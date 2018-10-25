@@ -30,7 +30,6 @@ class KittiSqueezeSegIO(TFRecordIO):
     INPUT_STD = np.array([[[11.47, 6.91, 0.86, 0.16, 12.32]]])
 
     NUM_CLASS = 4
-    CLASSES = ['unknown', 'car', 'pedestrian', 'cyclist']
     CLS_LOSS_WEIGHT = np.array([1/15.0, 1.0, 10.0, 10.0])
 
     @classmethod
