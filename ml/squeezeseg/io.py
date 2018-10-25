@@ -86,7 +86,6 @@ class KittiSqueezeSegIO(TFRecordIO):
             'weight'        : parsed_features['weight'],
         }
         labels = tf.sparse_tensor_to_dense(parsed_features['labels'])
-
         return features, labels
 
     @staticmethod
