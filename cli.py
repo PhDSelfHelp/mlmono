@@ -1,7 +1,9 @@
 import click
 
+import ml
 from ml.base import MLConfig
 from ml.base.estimator import MLEstimator
+from ml.squeezeseg.cli import npy2tfrecord
 
 
 @click.group()
@@ -27,6 +29,8 @@ def predict(config):
 
 main.add_command(train)
 main.add_command(predict)
+
+main.add_command(npy2tfrecord)
 
 if __name__ == "__main__":
     main()
