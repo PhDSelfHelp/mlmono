@@ -64,13 +64,18 @@ class MLEstimator(object):
             self.loss = self.trainer.loss
 
             # Construct metrics.
+            for metric in self.metrics:
+                metric.register_to_graph(self.graph)
+                metric.register_to_writer(self.io.summary_writer)
+
             return tf.estimator.EstimatorSpec(
                 mode=mode,
                 predictions=self.output,
                 loss=self.trainer.loss,
                 train_op=self.trainer.train_op,
                 training_hooks=self.trainer.train_hooks,
-                eval_metric_ops=self.metrics)
+                eval_metric_ops={})     # Add metric that needs evaluation each step.
+            # TODO(jdaaph): Add tf compatible eval metric ops.
 
         return model_fn
 

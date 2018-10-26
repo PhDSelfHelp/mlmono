@@ -61,9 +61,3 @@ class Viz(object):
 
         # force tensorflow to synchronise summaries
         summary_writer.flush()
-
-    def _add_summary_ops(self):
-        """Add extra summary operations."""
-        mc = self.mc
-
-
