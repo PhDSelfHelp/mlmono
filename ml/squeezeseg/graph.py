@@ -11,6 +11,68 @@ from ml.squeezeseg.utils import util
 
 
 class SqueezeSegGraph(MLGraph, ModelSkeleton):
+    def __init__(self, global_config):
+        self.model_skeleton_config = None
+        super().__init__(self.model_skeleton_config)
+
+        # Initialize constants.
+        BATCH_SIZE = self.global_config.trainer.batch_size
+        ZENITH_LEVEL = self.global_config.io.zenith_level
+        AZIMUTH_LEVEL = self.global_config.io.azimuth_level
+        self.classes = self.global_config.io.classes
+
+        # a scalar tensor in range (0, 1]. Usually set to 0.5 in training phase and
+        # 1.0 in evaluation phase
+        self.ph_keep_prob = tf.placeholder(tf.float32, name='keep_prob')
+        # projected lidar points on a 2D spherical surface
+        self.ph_lidar_input = tf.placeholder(
+            tf.float32, [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL, 5],
+            name='lidar_input'
+        )
+        # A tensor where an element is 1 if the corresponding cell contains an
+        # valid lidar measurement. Or if the data is missing, then mark it as 0.
+        self.ph_lidar_mask = tf.placeholder(
+            tf.float32, [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL, 1],
+            name='lidar_mask')
+        # A tensor where each element contains the class of each pixel
+        self.ph_label = tf.placeholder(
+            tf.int32, [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL],
+            name='label')
+        # weighted loss for different classes
+        self.ph_loss_weight = tf.placeholder(
+            tf.float32, [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL],
+            name='loss_weight')
+
+        # define a FIFOqueue for pre-fetching data
+        self.q = tf.FIFOQueue(
+            capacity=mc.QUEUE_CAPACITY,
+            dtypes=[tf.float32, tf.float32, tf.float32, tf.int32, tf.float32],
+            shapes=[[],
+                    [mc.BATCH_SIZE, mc.ZENITH_LEVEL, mc.AZIMUTH_LEVEL, 5],
+                    [mc.BATCH_SIZE, mc.ZENITH_LEVEL, mc.AZIMUTH_LEVEL, 1],
+                    [mc.BATCH_SIZE, mc.ZENITH_LEVEL, mc.AZIMUTH_LEVEL],
+                    [mc.BATCH_SIZE, mc.ZENITH_LEVEL, mc.AZIMUTH_LEVEL]]
+        )
+        self.enqueue_op = self.q.enqueue(
+            [self.ph_keep_prob, self.ph_lidar_input, self.ph_lidar_mask,
+             self.ph_label, self.ph_loss_weight]
+        )
+
+        self.keep_prob, self.lidar_input, self.lidar_mask, self.label, \
+            self.loss_weight = self.q.dequeue()
+
+        # model parameters
+        self.model_params = []
+
+        # model size counter
+        self.model_size_counter = []  # array of tuple of layer name, parameter size
+        # flop counter
+        self.flop_counter = []  # array of tuple of layer name, flop number
+        # activation counter
+        self.activation_counter = []  # array of tuple of layer name, output activations
+        self.activation_counter.append(
+            ('input', AZIMUTH_LEVEL * ZENITH_LEVEL * 3))
+
     def init_model(self, mc, gpu_id=0):
         with tf.device('/gpu:{}'.format(gpu_id)):
             # ModelSkeleton.__init__(self, mc)
@@ -20,6 +82,19 @@ class SqueezeSegGraph(MLGraph, ModelSkeleton):
             # self._add_train_graph()
             # self._add_viz_graph()
             # self._add_summary_ops()
+
+    def add_output_graph(self):
+        """Define how to intepret output."""
+        with tf.variable_scope('interpret_output') as scope:
+            self.prob = tf.multiply(
+                tf.nn.softmax(self.output_prob, dim=-1), self.lidar_mask,
+                name='pred_prob')
+            self.pred_cls = tf.argmax(self.prob, axis=3, name='pred_cls')
+
+            # Add activation summaries.
+            for cls_id, cls in enumerate(self.classes):
+                self._activation_summary(
+                    self.prob[:, :, :, cls_id], 'prob_'+cls)
 
     def add_forward_graph(self, features, graph):
         """NN architecture."""
@@ -155,3 +230,20 @@ class SqueezeSegGraph(MLGraph, ModelSkeleton):
             padding='SAME', freeze=freeze, stddev=stddev)
 
         return tf.concat([ex1x1, ex3x3], 3, name=layer_name+'/concat')
+
+    def _activation_summary(self, x, layer_name):
+        """Helper to create summaries for activations.
+
+        Args:
+          x: layer output tensor
+          layer_name: name of the layer
+        Returns:
+          nothing
+        """
+        with tf.variable_scope('activation_summary') as scope:
+            tf.summary.histogram(layer_name, x)
+            tf.summary.scalar(layer_name+'/sparsity', tf.nn.zero_fraction(x))
+            tf.summary.scalar(layer_name+'/average', tf.reduce_mean(x))
+            tf.summary.scalar(layer_name+'/max', tf.reduce_max(x))
+            tf.summary.scalar(layer_name+'/min', tf.reduce_min(x))
+

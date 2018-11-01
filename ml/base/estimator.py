@@ -52,21 +52,25 @@ class MLEstimator(object):
         )
         return estimator
 
-    def _gen_model_fn(self):
+    def _gen_model_fn(self, gpu_id=0):
 
         def model_fn(features, labels, mode, params):
-            # Construct graph.
-            self.output = self.graph.add_forward_pass()
 
-            # Construct trainer.
-            self.trainer.register_loss_to_graph(self.output, self.labels)
-            self.trainer.register_op_and_hook()
-            self.loss = self.trainer.loss
+            with tf.device('/gpu:{}'.format(gpu_id)):
+                # Construct graph.
+                self.graph.add_forward_pass()
+                self.graph.add_output_graph()
+                self.output = self.graph.output
 
-            # Construct metrics.
-            for metric in self.metrics:
-                metric.register_to_graph(self.graph)
-                metric.register_to_writer(self.io.summary_writer)
+                # Construct trainer.
+                self.trainer.register_loss_to_graph(self.output, self.labels)
+                self.trainer.register_op_and_hook()
+                self.loss = self.trainer.loss
+
+                # Construct metrics.
+                for metric in self.metrics:
+                    metric.register_to_graph(self.graph)
+                    metric.register_to_writer(self.io.summary_writer)
 
             return tf.estimator.EstimatorSpec(
                 mode=mode,

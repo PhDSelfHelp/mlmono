@@ -52,80 +52,10 @@ def _variable_with_weight_decay(name, shape, wd, initializer, trainable=True):
 
 
 class ModelSkeleton(object):
-    """Base class of NN detection models."""
+    """Base class of NN detection components."""
 
-    def __init__(self, mc):
-        self.mc = mc
-
-        # a scalar tensor in range (0, 1]. Usually set to 0.5 in training phase and
-        # 1.0 in evaluation phase
-        self.ph_keep_prob = tf.placeholder(tf.float32, name='keep_prob')
-        # projected lidar points on a 2D spherical surface
-        self.ph_lidar_input = tf.placeholder(
-            tf.float32, [mc.BATCH_SIZE, mc.ZENITH_LEVEL, mc.AZIMUTH_LEVEL, 5],
-            name='lidar_input'
-        )
-        # A tensor where an element is 1 if the corresponding cell contains an
-        # valid lidar measurement. Or if the data is missing, then mark it as 0.
-        self.ph_lidar_mask = tf.placeholder(
-            tf.float32, [mc.BATCH_SIZE, mc.ZENITH_LEVEL, mc.AZIMUTH_LEVEL, 1],
-            name='lidar_mask')
-        # A tensor where each element contains the class of each pixel
-        self.ph_label = tf.placeholder(
-            tf.int32, [mc.BATCH_SIZE, mc.ZENITH_LEVEL, mc.AZIMUTH_LEVEL],
-            name='label')
-        # weighted loss for different classes
-        self.ph_loss_weight = tf.placeholder(
-            tf.float32, [mc.BATCH_SIZE, mc.ZENITH_LEVEL, mc.AZIMUTH_LEVEL],
-            name='loss_weight')
-
-        # define a FIFOqueue for pre-fetching data
-        self.q = tf.FIFOQueue(
-            capacity=mc.QUEUE_CAPACITY,
-            dtypes=[tf.float32, tf.float32, tf.float32, tf.int32, tf.float32],
-            shapes=[[],
-                    [mc.BATCH_SIZE, mc.ZENITH_LEVEL, mc.AZIMUTH_LEVEL, 5],
-                    [mc.BATCH_SIZE, mc.ZENITH_LEVEL, mc.AZIMUTH_LEVEL, 1],
-                    [mc.BATCH_SIZE, mc.ZENITH_LEVEL, mc.AZIMUTH_LEVEL],
-                    [mc.BATCH_SIZE, mc.ZENITH_LEVEL, mc.AZIMUTH_LEVEL]]
-        )
-        self.enqueue_op = self.q.enqueue(
-            [self.ph_keep_prob, self.ph_lidar_input, self.ph_lidar_mask,
-             self.ph_label, self.ph_loss_weight]
-        )
-
-        self.keep_prob, self.lidar_input, self.lidar_mask, self.label, \
-            self.loss_weight = self.q.dequeue()
-
-        # model parameters
-        self.model_params = []
-
-        # model size counter
-        self.model_size_counter = []  # array of tuple of layer name, parameter size
-        # flop counter
-        self.flop_counter = []  # array of tuple of layer name, flop number
-        # activation counter
-        self.activation_counter = []  # array of tuple of layer name, output activations
-        self.activation_counter.append(
-            ('input', mc.AZIMUTH_LEVEL*mc.ZENITH_LEVEL*3))
-
-    def _add_forward_graph(self):
-        """NN architecture specification."""
-        raise NotImplementedError
-
-    def _add_output_graph(self):
-        """Define how to intepret output."""
-        mc = self.mc
-        with tf.variable_scope('interpret_output') as scope:
-            self.prob = tf.multiply(
-                tf.nn.softmax(self.output_prob, dim=-1), self.lidar_mask,
-                name='pred_prob')
-            self.pred_cls = tf.argmax(self.prob, axis=3, name='pred_cls')
-
-            # add summaries
-            for cls_id, cls in enumerate(mc.CLASSES):
-                self._activation_summary(
-                    self.prob[:, :, :, cls_id], 'prob_'+cls)
+    def __init__(self, model_skeleton_config):
+        self.mc = model_skeleton_config
 
     def _conv_bn_layer(
             self, inputs, conv_param_name, bn_param_name, scale_param_name, filters,
@@ -207,17 +137,17 @@ class ModelSkeleton(object):
                 variance_epsilon=mc.BATCH_NORM_EPSILON, name='batch_norm')
 
             self.model_size_counter.append(
-                (conv_param_name, (1+size*size*int(channels))*filters)
+                (conv_param_name, (1 + size * size * int(channels)) * filters)
             )
             out_shape = conv.get_shape().as_list()
             num_flops = \
-                (1+2*int(channels)*size*size)*filters*out_shape[1]*out_shape[2]
+                (1 + 2 * int(channels) * size * size) * filters * out_shape[1] * out_shape[2]
             if relu:
-                num_flops += 2*filters*out_shape[1]*out_shape[2]
+                num_flops += 2 * filters * out_shape[1] * out_shape[2]
             self.flop_counter.append((conv_param_name, num_flops))
 
             self.activation_counter.append(
-                (conv_param_name, out_shape[1]*out_shape[2]*out_shape[3])
+                (conv_param_name, out_shape[1] * out_shape[2] * out_shape[3])
             )
 
             if relu:
@@ -305,17 +235,17 @@ class ModelSkeleton(object):
                 out = conv_bias
 
             self.model_size_counter.append(
-                (layer_name, (1+size*size*int(channels))*filters)
+                (layer_name, (1 + size * size * int(channels)) * filters)
             )
             out_shape = out.get_shape().as_list()
             num_flops = \
-                (1+2*int(channels)*size*size)*filters*out_shape[1]*out_shape[2]
+                (1 + 2 * int(channels) * size * size) * filters * out_shape[1] * out_shape[2]
             if relu:
-                num_flops += 2*filters*out_shape[1]*out_shape[2]
+                num_flops += 2 * filters * out_shape[1] * out_shape[2]
             self.flop_counter.append((layer_name, num_flops))
 
             self.activation_counter.append(
-                (layer_name, out_shape[1]*out_shape[2]*out_shape[3])
+                (layer_name, out_shape[1] * out_shape[2] * out_shape[3])
             )
 
             return out
@@ -806,8 +736,8 @@ class ModelSkeleton(object):
             for cls in range(mc.NUM_CLASS):
                 theta_a = mc.BILATERAL_THETA_A[cls]
                 theta_r = mc.BILATERAL_THETA_R[cls]
-                bi_filter = tf.exp(-(diff_x**2+diff_y**2 +
-                                     diff_z**2)/2/theta_r**2)
+                bi_filter = tf.exp(-(diff_x ** 2 + diff_y ** 2 +
+                                     diff_z ** 2) / 2 / theta_r ** 2)
                 bi_filters.append(bi_filter)
             out = tf.transpose(
                 tf.stack(bi_filters),
@@ -816,19 +746,3 @@ class ModelSkeleton(object):
             )
 
         return out
-
-    def _activation_summary(self, x, layer_name):
-        """Helper to create summaries for activations.
-
-        Args:
-          x: layer output tensor
-          layer_name: name of the layer
-        Returns:
-          nothing
-        """
-        with tf.variable_scope('activation_summary') as scope:
-            tf.summary.histogram(layer_name, x)
-            tf.summary.scalar(layer_name+'/sparsity', tf.nn.zero_fraction(x))
-            tf.summary.scalar(layer_name+'/average', tf.reduce_mean(x))
-            tf.summary.scalar(layer_name+'/max', tf.reduce_max(x))
-            tf.summary.scalar(layer_name+'/min', tf.reduce_min(x))

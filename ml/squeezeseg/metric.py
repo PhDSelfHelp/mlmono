@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-class Viz(object):
+class Viz(MLMetric):
     def __init__(self, global_config):
         self.BATCH_SIZE = global_config.trainer.BATCH_SIZE
         self.ZENITH_LEVEL = global_config.dataset.ZENITH_LEVEL
@@ -35,7 +35,25 @@ class Viz(object):
                                           self.pred_image_to_show, collections='image_summary',
                                           max_outputs=BATCH_SIZE)
 
-        # Register IOU summaries.
+
+    def register_to_writer(self, summary_writer):
+        summary_writer.add_summary(summary_str, step)
+
+        for sum_str in iou_summary_list:
+            summary_writer.add_summary(sum_str, step)
+
+        for viz_sum in viz_summary_list:
+            summary_writer.add_summary(viz_sum, step)
+
+        # force tensorflow to synchronise summaries
+        summary_writer.flush()
+
+
+class IOUSummary(MLMetric):
+    def __init__(self, global_config):
+        self.global_config = global_config
+
+    def register_to_graph(self, graph):
         iou_summary_placeholders = []
         iou_summary_ops = []
         for obj_cls in self.global_config.io.CLASSES:
@@ -49,15 +67,5 @@ class Viz(object):
         self.iou_summary_placeholders = iou_summary_placeholders
         self.iou_summary_ops = iou_summary_ops
 
-
-    def register_to_writer(self, summary_writer):
-        summary_writer.add_summary(summary_str, step)
-
-        for sum_str in iou_summary_list:
-            summary_writer.add_summary(sum_str, step)
-
-        for viz_sum in viz_summary_list:
-            summary_writer.add_summary(viz_sum, step)
-
-        # force tensorflow to synchronise summaries
-        summary_writer.flush()
+    def register_to_writer(self, writer):
+        pass
