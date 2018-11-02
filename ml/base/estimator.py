@@ -58,8 +58,7 @@ class MLEstimator(object):
 
             with tf.device('/gpu:{}'.format(gpu_id)):
                 # Construct graph.
-                self.graph.add_forward_pass()
-                self.graph.add_output_graph()
+                self.graph.add_forward_pass(features, mode)
                 self.output = self.graph.output
 
                 # Construct trainer.

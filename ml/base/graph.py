@@ -15,6 +15,6 @@ class MLGraph(object):
         subcls = find_subclass_by_name(cls, graph_config.graph_name)
         return subcls.from_config(graph_config)
 
-    def add_forward_pass(self, input):
+    def add_forward_pass(self, features, mode):
         raise NotImplementedError
         return self.output

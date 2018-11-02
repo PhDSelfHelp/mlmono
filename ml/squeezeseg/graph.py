@@ -23,43 +23,40 @@ class SqueezeSegGraph(MLGraph, ModelSkeleton):
 
         # a scalar tensor in range (0, 1]. Usually set to 0.5 in training phase and
         # 1.0 in evaluation phase
-        self.ph_keep_prob = tf.placeholder(tf.float32, name='keep_prob')
-        # projected lidar points on a 2D spherical surface
-        self.ph_lidar_input = tf.placeholder(
-            tf.float32, [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL, 5],
-            name='lidar_input'
-        )
-        # A tensor where an element is 1 if the corresponding cell contains an
-        # valid lidar measurement. Or if the data is missing, then mark it as 0.
-        self.ph_lidar_mask = tf.placeholder(
-            tf.float32, [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL, 1],
-            name='lidar_mask')
-        # A tensor where each element contains the class of each pixel
-        self.ph_label = tf.placeholder(
-            tf.int32, [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL],
-            name='label')
-        # weighted loss for different classes
-        self.ph_loss_weight = tf.placeholder(
-            tf.float32, [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL],
-            name='loss_weight')
+        # self.ph_keep_prob = tf.placeholder(tf.float32, name='keep_prob')
+        # # projected lidar points on a 2D spherical surface
+        # self.ph_lidar_input = tf.placeholder(
+        #     tf.float32, [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL, 5],
+        #     name='lidar_input'
+        # )
+        # # A tensor where an element is 1 if the corresponding cell contains an
+        # # valid lidar measurement. Or if the data is missing, then mark it as 0.
+        # self.ph_lidar_mask = tf.placeholder(
+        #     tf.float32, [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL, 1],
+        #     name='lidar_mask')
+        # # A tensor where each element contains the class of each pixel
+        # self.ph_label = tf.placeholder(
+        #     tf.int32, [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL],
+        #     name='label')
+        # # weighted loss for different classes
+        # self.ph_loss_weight = tf.placeholder(
+        #     tf.float32, [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL],
+        #     name='loss_weight')
 
-        # define a FIFOqueue for pre-fetching data
-        self.q = tf.FIFOQueue(
-            capacity=mc.QUEUE_CAPACITY,
-            dtypes=[tf.float32, tf.float32, tf.float32, tf.int32, tf.float32],
-            shapes=[[],
-                    [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL, 5],
-                    [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL, 1],
-                    [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL],
-                    [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL]]
-        )
-        self.enqueue_op = self.q.enqueue(
-            [self.ph_keep_prob, self.ph_lidar_input, self.ph_lidar_mask,
-             self.ph_label, self.ph_loss_weight]
-        )
-
-        self.keep_prob, self.lidar_input, self.lidar_mask, self.label, \
-            self.loss_weight = self.q.dequeue()
+        # # define a FIFOqueue for pre-fetching data
+        # self.q = tf.FIFOQueue(
+        #     capacity=mc.QUEUE_CAPACITY,
+        #     dtypes=[tf.float32, tf.float32, tf.float32, tf.int32, tf.float32],
+        #     shapes=[[],
+        #             [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL, 5],
+        #             [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL, 1],
+        #             [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL],
+        #             [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL]]
+        # )
+        # self.enqueue_op = self.q.enqueue(
+        #     [self.ph_keep_prob, self.ph_lidar_input, self.ph_lidar_mask,
+        #      self.ph_label, self.ph_loss_weight]
+        # )
 
         # model parameters
         self.model_params = []
@@ -73,8 +70,9 @@ class SqueezeSegGraph(MLGraph, ModelSkeleton):
         self.activation_counter.append(
             ('input', AZIMUTH_LEVEL * ZENITH_LEVEL * 3))
 
-    def add_output_graph(self):
+    def _add_output_graph(self):
         """Define how to intepret output."""
+
         with tf.variable_scope('interpret_output') as scope:
             self.prob = tf.multiply(
                 tf.nn.softmax(self.output_prob, dim=-1), self.lidar_mask,
@@ -86,9 +84,17 @@ class SqueezeSegGraph(MLGraph, ModelSkeleton):
                 self._activation_summary(
                     self.prob[:, :, :, cls_id], 'prob_' + cls_name)
 
-    def add_forward_graph(self, features, graph):
+    def add_forward_graph(self, features, mode):
         """NN architecture."""
 
+        is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+
+        # Input parsing for the graph.
+        self.keep_prob = 0.5 if is_training else 1
+        self.lidar_input = features['lidar_input']
+        self.lidar_mask = features['lidar_mask']
+        self.loss_weight = features['weight']
+        
         conv1 = self._conv_layer(
             'conv1', self.lidar_input, filters=64, size=3, stride=2,
             padding='SAME', freeze=False, xavier=True)
@@ -158,6 +164,9 @@ class SqueezeSegGraph(MLGraph, ModelSkeleton):
             sizes=[LCN_HEIGHT, LCN_WIDTH], num_iterations=RCRF_ITER,
             padding='SAME'
         )
+
+        self._add_output_graph()
+
         return self.output_prob
 
     def _fire_layer(self, layer_name, inputs, s1x1, e1x1, e3x3, stddev=0.001,
