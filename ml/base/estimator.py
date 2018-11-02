@@ -3,7 +3,7 @@ import tensorflow as tf
 from ml.base.graph import MLGraph
 from ml.base.trainer import MLTrainer
 from ml.base.predictor import MLPredictor
-from ml.base.metric import MLMetric
+from ml.base.metric import MetricCollection
 from ml.base.io import MLIO
 
 
@@ -14,7 +14,7 @@ class MLEstimator(object):
         self.graph = graph
         self.trainer = trainer
         self.predictor = predictor
-        self.metrics = metrics
+        self.metric_collection = metric_collection
         self.io = io
         self.estimator = self._gen_estimator()
 
@@ -40,10 +40,10 @@ class MLEstimator(object):
         graph = MLGraph.from_config(config)
         trainer = MLTrainer.from_config(config)
         predictor = MLPredictor.from_config(config)
-        metric = MLMetric.from_config(config)
+        metric_collection = MetricCollection.from_config(config)
         io = MLIO.from_config(config)
 
-        return cls(config, graph, trainer, predictor, metric, io)
+        return cls(config, graph, trainer, predictor, metric_collection, io)
 
     def _gen_estimator(self):
         estimator = tf.estimator.Estimator(
@@ -63,14 +63,12 @@ class MLEstimator(object):
                 self.output = self.graph.output
 
                 # Construct trainer.
-                self.trainer.register_loss_to_graph(self.output, self.labels)
+                self.trainer.register_loss_to_graph(self.graph, self.output, self.labels)
                 self.trainer.register_op_and_hook()
                 self.loss = self.trainer.loss
 
                 # Construct metrics.
-                for metric in self.metrics:
-                    metric.register_to_graph(self.graph)
-                    metric.register_to_writer(self.io.summary_writer)
+                self.metric_collection.register_step_metric_to_graph(self.graph)
 
             return tf.estimator.EstimatorSpec(
                 mode=mode,

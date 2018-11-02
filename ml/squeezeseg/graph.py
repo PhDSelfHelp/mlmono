@@ -48,10 +48,10 @@ class SqueezeSegGraph(MLGraph, ModelSkeleton):
             capacity=mc.QUEUE_CAPACITY,
             dtypes=[tf.float32, tf.float32, tf.float32, tf.int32, tf.float32],
             shapes=[[],
-                    [mc.BATCH_SIZE, mc.ZENITH_LEVEL, mc.AZIMUTH_LEVEL, 5],
-                    [mc.BATCH_SIZE, mc.ZENITH_LEVEL, mc.AZIMUTH_LEVEL, 1],
-                    [mc.BATCH_SIZE, mc.ZENITH_LEVEL, mc.AZIMUTH_LEVEL],
-                    [mc.BATCH_SIZE, mc.ZENITH_LEVEL, mc.AZIMUTH_LEVEL]]
+                    [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL, 5],
+                    [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL, 1],
+                    [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL],
+                    [BATCH_SIZE, ZENITH_LEVEL, AZIMUTH_LEVEL]]
         )
         self.enqueue_op = self.q.enqueue(
             [self.ph_keep_prob, self.ph_lidar_input, self.ph_lidar_mask,
@@ -73,16 +73,6 @@ class SqueezeSegGraph(MLGraph, ModelSkeleton):
         self.activation_counter.append(
             ('input', AZIMUTH_LEVEL * ZENITH_LEVEL * 3))
 
-    def init_model(self, mc, gpu_id=0):
-        with tf.device('/gpu:{}'.format(gpu_id)):
-            # ModelSkeleton.__init__(self, mc)
-            self.add_forward_graph(self.graph)
-            # self._add_output_graph()
-            # self._add_loss_graph()
-            # self._add_train_graph()
-            # self._add_viz_graph()
-            # self._add_summary_ops()
-
     def add_output_graph(self):
         """Define how to intepret output."""
         with tf.variable_scope('interpret_output') as scope:
@@ -92,9 +82,9 @@ class SqueezeSegGraph(MLGraph, ModelSkeleton):
             self.pred_cls = tf.argmax(self.prob, axis=3, name='pred_cls')
 
             # Add activation summaries.
-            for cls_id, cls in enumerate(self.classes):
+            for cls_id, cls_name in enumerate(self.classes):
                 self._activation_summary(
-                    self.prob[:, :, :, cls_id], 'prob_'+cls)
+                    self.prob[:, :, :, cls_id], 'prob_' + cls_name)
 
     def add_forward_graph(self, features, graph):
         """NN architecture."""
@@ -246,4 +236,3 @@ class SqueezeSegGraph(MLGraph, ModelSkeleton):
             tf.summary.scalar(layer_name+'/average', tf.reduce_mean(x))
             tf.summary.scalar(layer_name+'/max', tf.reduce_max(x))
             tf.summary.scalar(layer_name+'/min', tf.reduce_min(x))
-

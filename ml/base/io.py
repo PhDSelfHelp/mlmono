@@ -16,7 +16,7 @@ class MLIO(object):
     INTERLEAVE_BLOCK = 1
     INTERLEAVE_CYCLE = 100
     DATA_SHUFFLE_BUFFER = 128
-
+    NUM_PARALLEL_PARSE = 4
 
     def __init__(self, global_config):
         self.global_config = global_config
@@ -40,6 +40,8 @@ class MLIO(object):
                                         MLIO.INTERLEAVE_CYCLE)
         self.data_shuffle_buffer = getattr(self.io_config, 'data_shuffle_buffer',
                                            MLIO.DATA_SHUFFLE_BUFFER)
+        self.num_parallel_parse = getattr(self.io_config, 'num_parallel_parse',
+                                           MLIO.NUM_PARALLEL_PARSE)
 
         self.data_dir = getattr(self.io_config, 'data_dir', None)
 
@@ -101,12 +103,14 @@ class TFRecordIO(MLIO):
             self.download_data_if_not_exist(self.data_dir)
         self.dataset = self._gen_tf_dataset()
 
-        def input_fn():
-            self.iterator = self.dataset.make_one_shot_iterator()
+        # def input_fn():
+        #     self.iterator = self.dataset.make_one_shot_iterator()
+        #     data_ite = iterator.get_next()
+        #     features, labels = self.parse_iter(data_ite)
+        #     return features, labels
 
-            data_ite = iterator.get_next()
-            features, labels = self.parse_iter(data_ite)
-            return features, labels
+        def input_fn():
+            return self.dataset
 
         return input_fn
 
@@ -128,6 +132,8 @@ class TFRecordIO(MLIO):
         if is_training(self.mode):
             dataset = dataset.shuffle(self.io_config.data_shuffle_buffer)
         dataset = dataset.repeat(num_epochs)
+        dataset = dataset.map(map_func=parse_iter,
+                              num_parallel_calls=self.num_parallel_parse)
         return dataset
 
     @staticmethod

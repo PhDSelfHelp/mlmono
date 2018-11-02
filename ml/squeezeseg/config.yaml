@@ -35,4 +35,8 @@ trainer:
 predictor: null
 
 
-metric: null
+metric:
+    - metric_name: Viz
+    - metric_name: IOUSummary
+
+

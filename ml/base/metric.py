@@ -1,7 +1,7 @@
 from ml.base.base_utils import find_subclass_by_name, all_subclasses
 
 
-class AllMetrics(object):
+class MetricsCollection(object):
 
     def __init__(self, global_config):
         self.global_config = global_config
@@ -26,13 +26,16 @@ class AllMetrics(object):
             metric_list.append(subcls.from_config(global_config))
         return all_metrics
 
-    def gen_eval_metric_ops(self):
+    def register_step_metric_to_graph(self, graph):
         ''' Generate every step metrics' `eval_metric_ops` for `tf.estimator.EstimatorSpec`.
         '''
-        for metric in self.step_metrics
+        for step_metric in self.step_metrics:
+            step_metric.register_to_graph(graph)
 
 
 class MLMetric(object):
+
+    name = ''
 
     def __init__(self, global_config):
         self.global_config = global_config
@@ -47,13 +50,11 @@ class MLMetric(object):
     def register_to_graph(self, graph):
         raise NotImplementedError
 
-    def register_to_writer(self, writer):
-        raise NotImplementedError
 
-
-class StepMetric(object):
+class StepMetric(MLMetric):
     pass
 
 
-class EndingMetric(object):
+class EndingMetric(MLMetric):
+    # TODO(jdaaph): Add ending metric for ml.base
     pass

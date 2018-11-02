@@ -36,22 +36,10 @@ class Viz(MLMetric):
                                           max_outputs=BATCH_SIZE)
 
 
-    def register_to_writer(self, summary_writer):
-        summary_writer.add_summary(summary_str, step)
-
-        for sum_str in iou_summary_list:
-            summary_writer.add_summary(sum_str, step)
-
-        for viz_sum in viz_summary_list:
-            summary_writer.add_summary(viz_sum, step)
-
-        # force tensorflow to synchronise summaries
-        summary_writer.flush()
-
-
 class IOUSummary(MLMetric):
     def __init__(self, global_config):
         self.global_config = global_config
+        self.iou_summary_ops = None
 
     def register_to_graph(self, graph):
         iou_summary_placeholders = []
@@ -60,12 +48,9 @@ class IOUSummary(MLMetric):
             ph = tf.placeholder(tf.float32, name=obj_cls+'_iou')
             iou_summary_placeholders.append(ph)
             iou_summary_ops.append(
-                tf.summary.scalar('Eval/' + obj_cls + '_iou',
+                tf.summary.scalar('Eval/{}_iou'.format(obj_cls),
                                 ph,
                                 collections='eval_summary')
             )
         self.iou_summary_placeholders = iou_summary_placeholders
         self.iou_summary_ops = iou_summary_ops
-
-    def register_to_writer(self, writer):
-        pass
