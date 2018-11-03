@@ -1,7 +1,7 @@
 from ml.base.base_utils import find_subclass_by_name, all_subclasses
 
 
-class MetricsCollection(object):
+class MetricCollection(object):
 
     def __init__(self, global_config):
         self.global_config = global_config

@@ -13,6 +13,10 @@ io:
     logs_dir: /tmp/run_0/logs
     model_dir: /tmp/run_0/model
 
+
+
+############## TODO: make recursive config init
+
     batch_size: 24
     fn_shuffle_buffer: 100
 
