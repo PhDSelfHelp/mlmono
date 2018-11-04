@@ -8,6 +8,6 @@ from ml.base.predictor import MLPredictor
 
 from ml.base.io import MLIO, TFRecordIO, KerasDatasetIO
 
-from ml.base.metric import MLMetric
+from ml.base.metric import MLMetric, StepMetric, EndingMetric
 
 from ml.base.other_comp import PlaceHolder

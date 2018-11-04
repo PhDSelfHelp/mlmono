@@ -19,11 +19,11 @@ class MetricCollection(object):
 
             metric_list = None
             if subcls in all_subclasses(StepMetric):
-                metric_list = self.step_metrics
+                metric_list = all_metrics.step_metrics
             if subcls in all_subclasses(EndingMetric):
-                metric_list = self.ending_metrics
+                metric_list = all_metrics.ending_metrics
 
-            metric_list.append(subcls.from_config(global_config))
+            metric_list.append(subcls.from_config(global_config, metric_config))
         return all_metrics
 
     def register_step_metric_to_graph(self, graph):
@@ -42,10 +42,9 @@ class MLMetric(object):
         self.metric_config = self.global_config.metric
 
     @classmethod
-    def from_config(cls, global_config):
-        metric_config = global_config.metric
+    def from_config(cls, global_config, metric_config):
         subcls = find_subclass_by_name(cls, metric_config.metric_name)
-        return subcls.from_config(global_config)
+        return subcls.from_config(global_config, metric_config)
 
     def register_to_graph(self, graph):
         raise NotImplementedError

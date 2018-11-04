@@ -41,7 +41,7 @@ class KittiSqueezeSegIO(TFRecordIO):
         io.zenith_level = io_config.zenith_level
         io.azimuth_level = io_config.azimuth_level
 
-        io.num_class = get(io_config, 'num_class', KittiSqueezeSegIO.NUM_CLASS)
+        io.num_class = getattr(io_config, 'num_class', KittiSqueezeSegIO.NUM_CLASS)
         return io
 
     @staticmethod

@@ -29,9 +29,10 @@ class MLIO(object):
         self.summary_writer = None
 
         # Data reading configs for tf.data.TFRecordDataset.
+        self.batch_size = self.global_config.trainer.batch_size
+
         self.data_enable_download = getattr(self.io_config,
                                             'data_enable_download', False)
-        self.batch_size = self.io_config.batch_size
         self.data_file_pattern = getattr(self.io_config, 'data_file_pattern',
                                          MLIO.DATA_FILE_PATTERN)
         self.interleave_block = getattr(self.io_config, 'interleave_block',

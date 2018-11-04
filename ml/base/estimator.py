@@ -9,7 +9,7 @@ from ml.base.io import MLIO
 
 class MLEstimator(object):
 
-    def __init__(self, config, graph, trainer, predictor, metrics, io):
+    def __init__(self, config, graph, trainer, predictor, metric_collection, io):
         self.config = config
         self.graph = graph
         self.trainer = trainer

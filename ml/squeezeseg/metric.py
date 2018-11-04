@@ -1,12 +1,16 @@
 import tensorflow as tf
 
-from ml.base import MLMetric
+from ml.base import StepMetric
 
-class Viz(MLMetric):
+class Viz(StepMetric):
+    @classmethod
+    def from_config(cls, global_config, metric_config):
+        return Viz(global_config)
+
     def __init__(self, global_config):
-        self.BATCH_SIZE = global_config.trainer.BATCH_SIZE
-        self.ZENITH_LEVEL = global_config.dataset.ZENITH_LEVEL
-        self.AZIMUTH_LEVEL = global_config.dataset.AZIMUTH_LEVEL
+        self.BATCH_SIZE = global_config.trainer.batch_size
+        self.ZENITH_LEVEL = global_config.io.zenith_level
+        self.AZIMUTH_LEVEL = global_config.io.azimuth_level
         
     def register_to_graph(self):
         """Define the visualization operation."""
@@ -37,7 +41,11 @@ class Viz(MLMetric):
                                           max_outputs=BATCH_SIZE)
 
 
-class IOUSummary(MLMetric):
+class IOUSummary(StepMetric):
+    @classmethod
+    def from_config(cls, global_config, metric_config):
+        return IOUSummary(global_config)
+
     def __init__(self, global_config):
         self.global_config = global_config
         self.iou_summary_ops = None
