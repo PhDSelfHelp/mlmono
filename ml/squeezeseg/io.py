@@ -78,7 +78,7 @@ class KittiSqueezeSegIO(TFRecordIO):
             'lidar_input': tf.FixedLenFeature([], tf.float32),
             'lidar_mask' : tf.FixedLenFeature([], tf.float32),
             'weight'     : tf.FixedLenFeature([], tf.float32),
-            'labels'     : tf.FixedLenFeature([], tf.float32),
+            'label'      : tf.FixedLenFeature([], tf.float32),
         }
         parsed_features = tf.parse_single_example(example_proto, features_format)
         features = {
@@ -86,7 +86,7 @@ class KittiSqueezeSegIO(TFRecordIO):
             'lidar_mask'    : parsed_features['lidar_mask'],
             'weight'        : parsed_features['weight'],
         }
-        labels = tf.sparse_tensor_to_dense(parsed_features['labels'])
+        labels = parsed_features['label'],
         return features, labels
 
     @staticmethod
