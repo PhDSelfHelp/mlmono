@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import tensorflow as tf
 
-from ml.squeezeseg.utils import util
+from ml.squeezeseg import utils
 
 
 def _variable_on_device(name, shape, initializer, trainable=True):
@@ -555,20 +555,20 @@ class ModelSkeleton(object):
             self.model_params += [bi_compat_kernel, angular_compat_kernel]
 
             condensing_kernel = tf.constant(
-                util.condensing_matrix(sizes[0], sizes[1], mc.NUM_CLASS),
+                utils.condensing_matrix(sizes[0], sizes[1], mc.NUM_CLASS),
                 dtype=tf.float32,
                 name='condensing_kernel'
             )
 
             angular_filters = tf.constant(
-                util.angular_filter_kernel(
+                utils.angular_filter_kernel(
                     sizes[0], sizes[1], mc.NUM_CLASS, mc.ANG_THETA_A**2),
                 dtype=tf.float32,
                 name='angular_kernel'
             )
 
             bi_angular_filters = tf.constant(
-                util.angular_filter_kernel(
+                utils.angular_filter_kernel(
                     sizes[0], sizes[1], mc.NUM_CLASS, mc.BILATERAL_THETA_A**2),
                 dtype=tf.float32,
                 name='bi_angular_kernel'
@@ -708,7 +708,7 @@ class ModelSkeleton(object):
 
         with tf.variable_scope(layer_name) as scope:
             condensing_kernel = tf.constant(
-                util.condensing_matrix(size_z, size_a, in_channel),
+                utils.condensing_matrix(size_z, size_a, in_channel),
                 dtype=tf.float32,
                 name='condensing_kernel'
             )

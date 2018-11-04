@@ -1,5 +1,7 @@
+from ml.base.trainer import MLTrainer
+from ml.base.base_utils import find_subclass_by_name
 
-class SqueezeSegTrainer(object):
+class SqueezeSegTrainer(MLTrainer):
 
     def __init__(self, global_config):
         self.global_config = global_config
@@ -20,16 +22,15 @@ class SqueezeSegTrainer(object):
         self.momentum = self.trainer_config.momentum
         self.max_grad_norm = self.trainer_config.max_grad_norm
 
+        self.cls_loss_coef = self.trainer_config.cls_loss_coef
+
         # Other data related config constants.
         self.num_class = self.global_config.io.num_class
-        self.cls_loss_coef = self.global_config.io.cls_loss_coef
         
 
     @classmethod
     def from_config(cls, global_config):
-        trainer_config = global_config.trainer
-        subcls = find_subclass_by_name(cls, trainer_config.trainer_name)
-        return subcls.from_config(global_config)
+        return cls(global_config)
 
     def register_op_and_hook(self):
         raise NotImplementedError

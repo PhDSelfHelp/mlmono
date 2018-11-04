@@ -13,30 +13,30 @@ io:
     logs_dir: /tmp/run_0/logs
     model_dir: /tmp/run_0/model
 
-
-
-############## TODO: make recursive config init
-
-    batch_size: 24
     fn_shuffle_buffer: 100
 
     azimuth_level: 512
     zenith_level: 64
 
-    CLASSES: ['unknown', 'car', 'pedestrian', 'cyclist']
-
+    classes: ['unknown', 'car', 'pedestrian', 'cyclist']
+    num_class: 4
 
 trainer: 
+    trainer_name: SqueezeSegTrainer
+
     cls_loss_coef: 15.0
     weight_decay: 0.0001
-    learning_rate: 0.01
+    lr: 0.01
     decay_steps: 10000
     max_grad_norm: 1.0
     momentum: 0.9
     lr_decay_factor: 0.5
 
+    batch_size: 24
 
-predictor: null
+
+predictor:
+    predictor_name: PlaceHolder
 
 
 metric:

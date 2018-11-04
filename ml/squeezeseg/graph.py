@@ -1,18 +1,24 @@
 import os
 import sys
 
-import joblib
 import numpy as np
 import tensorflow as tf
 
 from ml.base.graph import MLGraph
 from ml.squeezeseg.nn_skeleton import ModelSkeleton
-from ml.squeezeseg.utils import util
 
 
-class SqueezeSegGraph(MLGraph, ModelSkeleton):
+class SqueezeSegNet(ModelSkeleton, MLGraph):
+
+    @classmethod
+    def from_config(cls, global_config):
+        cls(global_config)
+
     def __init__(self, global_config):
+        self.global_config = global_config
         self.model_skeleton_config = None
+
+        # TODO(jdaaph): Use an easy to understand method to call ModelSkeleton ctor.
         super().__init__(self.model_skeleton_config)
 
         # Initialize constants.

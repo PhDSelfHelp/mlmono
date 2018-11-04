@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+from ml.base import MLMetric
 
 class Viz(MLMetric):
     def __init__(self, global_config):

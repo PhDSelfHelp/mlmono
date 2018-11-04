@@ -40,6 +40,8 @@ class KittiSqueezeSegIO(TFRecordIO):
             io.logs_dir, graph=tf.get_default_graph())
         io.zenith_level = io_config.zenith_level
         io.azimuth_level = io_config.azimuth_level
+
+        io.num_class = get(io_config, 'num_class', KittiSqueezeSegIO.NUM_CLASS)
         return io
 
     @staticmethod
@@ -162,7 +164,7 @@ class KittiSqueezeSegIO(TFRecordIO):
         lidar_input = X[:, :, :KittiSqueezeSegIO.LABEL_TAG]
         label = X[:, :, :KittiSqueezeSegIO.LABEL_TAG]
         weight = np.zeros(label.shape)
-        for l in range(KittiSqueezeSegIO.NUM_CLASS):
+        for l in range(self.num_class):
             weight[label==l] = KittiSqueezeSegIO.CLS_LOSS_WEIGHT[int(l)]
         d_feature = {
             'lidar_mask': dtype_feature_x(lidar_mask.ravel()),

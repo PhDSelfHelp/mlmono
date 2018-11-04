@@ -1,7 +1,7 @@
 import click
 
 import ml
-from ml.base import MLConfig
+from ml.base import GlobalConfig
 from ml.base.estimator import MLEstimator
 from ml.squeezeseg.cli import npy2tfrecord
 
@@ -13,7 +13,7 @@ def main():
 @click.command()
 @click.option('--config', help='The config file', required=True)
 def train(config):
-    config = MLConfig.from_file(config)
+    config = GlobalConfig.from_file(config)
     config.global_config.mode = 'train'
     # TODO(jxwulittlebeans): The command line action should override the one in config.
     estimator = MLEstimator.from_config(config)
@@ -22,7 +22,7 @@ def train(config):
 @click.command()
 @click.option('--config', help='The config file', required=True)
 def predict(config):
-    config = MLConfig.from_file(config)
+    config = GlobalConfig.from_file(config)
     config.global_config.mode = 'predict'
     estimator = MLEstimator.from_config(config)
     estimator.predict()
