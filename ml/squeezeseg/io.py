@@ -24,7 +24,8 @@ class KittiSqueezeSegIO(TFRecordIO):
     LABEL_TAG = 5
     DEPTH_TAG = 5
     DATA_SHAPE_X = (64, 512, 5)
-    DATA_SHAPE_Y = (64, 512, 1)
+    DATA_SHAPE_MASK = (64, 512, 1)
+    DATA_SHAPE_Y = (64, 512)
 
     INPUT_MEAN = np.array([[[10.88, 0.23, -1.04, 0.21, 12.12]]])
     INPUT_STD = np.array([[[11.47, 6.91, 0.86, 0.16, 12.32]]])
@@ -81,12 +82,16 @@ class KittiSqueezeSegIO(TFRecordIO):
             'label'      : tf.FixedLenFeature([], tf.float32),
         }
         parsed_features = tf.parse_single_example(example_proto, features_format)
+        print(tf.shape(parsed_features['lidar_input']))
         features = {
-            'lidar_input'   : parsed_features['lidar_input'],
-            'lidar_mask'    : parsed_features['lidar_mask'],
-            'weight'        : parsed_features['weight'],
+            'lidar_input'   : tf.reshape(parsed_features['lidar_input'],
+                                         KittiSqueezeSegIO.DATA_SHAPE_X),
+            'lidar_mask'    : tf.reshape(parsed_features['lidar_mask'],
+                                         KittiSqueezeSegIO.DATA_SHAPE_MASK),
+            'weight'        : tf.reshape(parsed_features['weight'],
+                                         KittiSqueezeSegIO.DATA_SHAPE_Y),
         }
-        labels = parsed_features['label'],
+        labels = tf.reshape(parsed_features['label'], KittiSqueezeSegIO.DATA_SHAPE_Y)
         return features, labels
 
     @staticmethod
