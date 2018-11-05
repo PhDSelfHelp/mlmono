@@ -11,7 +11,7 @@ class MLIO(object):
     # INTERLEAVE_CYCLE -> how many concurrent open files.
     # See https://www.tensorflow.org/performance/datasets_performance.
 
-    DATA_FILE_PATTERN = "*.tfrecord"
+    DATA_FILE_PATTERN = "*.tfrecords"
 
     INTERLEAVE_BLOCK = 1
     INTERLEAVE_CYCLE = 100
@@ -55,7 +55,9 @@ class MLIO(object):
                     msg = "data_dir and filenames must have one and only one defined in config::io."
                     raise ValueError(msg)
                 self.filenames = find_tfrecords_in_dir(self.data_dir, self.data_file_pattern)
-
+        
+        print(self.data_dir)
+        print(self.filenames)
         # Model saving configs for tf.estimator checkpoints.
         self.model_dir = self.io_config.model_dir
 

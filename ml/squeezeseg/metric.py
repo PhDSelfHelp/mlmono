@@ -12,7 +12,7 @@ class Viz(StepMetric):
         self.ZENITH_LEVEL = global_config.io.zenith_level
         self.AZIMUTH_LEVEL = global_config.io.azimuth_level
         
-    def register_to_graph(self):
+    def register_to_graph(self, graph):
         """Define the visualization operation."""
         BATCH_SIZE = self.BATCH_SIZE
         ZENITH_LEVEL = self.ZENITH_LEVEL
@@ -53,7 +53,7 @@ class IOUSummary(StepMetric):
     def register_to_graph(self, graph):
         iou_summary_placeholders = []
         iou_summary_ops = []
-        for obj_cls in self.global_config.io.CLASSES:
+        for obj_cls in self.global_config.io.classes:
             ph = tf.placeholder(tf.float32, name=obj_cls+'_iou')
             iou_summary_placeholders.append(ph)
             iou_summary_ops.append(

@@ -16,7 +16,7 @@ io:
     io_name: KittiSqueezeSegIO
 
     data_enable_download: false
-    data_dir: data/kitti_squeezeseg
+    data_dir: data/kitti_squeezeseg/lidar_2d_tfrecords
     logs_dir: /tmp/run_0/logs
     model_dir: /tmp/run_0/model
 
@@ -32,7 +32,7 @@ io:
 trainer: 
     trainer_name: SqueezeSegTrainer
 
-    num_epochs: 10
+    num_epochs: 10000
 
     cls_loss_coef: 15.0
     weight_decay: 0.0001

@@ -84,5 +84,6 @@ class SqueezeSegTrainer(MLTrainer):
         apply_gradient_op = opt.apply_gradients(
             grads_vars, global_step=self.global_step)
 
-        with tf.control_dependencies([apply_gradient_op]):
-            self.train_op = tf.no_op(name='train')
+        self.train_op = apply_gradient_op
+        # with tf.control_dependencies([apply_gradient_op]):
+        #     self.train_op = tf.no_op(name='train')

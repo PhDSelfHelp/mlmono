@@ -18,18 +18,12 @@ class MLEstimator(object):
         self.io = io
         self.estimator = self._gen_estimator()
 
-        def train():
-            self.estimator.train(
-                input_fn = self.io.gen_input_fn(self.trainer.num_epochs)
-            )
-
-        def predict():
-            self.estimator.predict(
-                input_fn = self.io.gen_input_fn(self.predictor.num_epochs)
-            )
-
-        self.train = train
-        self.predict = predict
+    def train(self):
+        print('enter training')
+        self.estimator.train(
+            input_fn = self.io.gen_input_fn(self.trainer.num_epochs),
+            steps=1000,
+        )
 
     @classmethod
     def from_config(cls, config):
@@ -58,6 +52,7 @@ class MLEstimator(object):
 
                 # Construct trainer.
                 self.trainer.register_loss_to_graph(self.graph, self.output, labels)
+                self.trainer.register_train_graph()
                 self.trainer.register_op_and_hook()
                 self.loss = self.trainer.loss
 
@@ -74,10 +69,3 @@ class MLEstimator(object):
             # TODO(jdaaph): Add tf compatible eval metric ops.
 
         return model_fn
-
-    def _gen_input_fn(self):
-
-        def input_fn(features, labels, mode, params):
-            pass
-
-        return input_fn
