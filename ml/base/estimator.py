@@ -42,7 +42,6 @@ class MLEstimator(object):
         predictor = MLPredictor.from_config(config)
         metric_collection = MetricCollection.from_config(config)
         io = MLIO.from_config(config)
-
         return cls(config, graph, trainer, predictor, metric_collection, io)
 
     def _gen_estimator(self):
@@ -55,7 +54,7 @@ class MLEstimator(object):
     def _gen_model_fn(self, gpu_id=0):
 
         def model_fn(features, labels, mode, params):
-
+            # TODO(jdaaph): Add cpu and gpu flag.
             with tf.device('/gpu:{}'.format(gpu_id)):
                 # Construct graph.
                 self.graph.add_forward_pass(features, mode)

@@ -4,6 +4,13 @@ mode: train
 graph:
     graph_name: SqueezeSegNet
 
+    ang_filter_coef: 0.02
+    ang_theta_a: [.9, .9, .6, .6]
+
+    bi_filter_coef: 0.1
+    bilateral_theta_a: [.9, .9, .6, .6]
+    bilateral_theta_r: [.015, .015, .01, .01]
+    
 
 io:
     io_name: KittiSqueezeSegIO

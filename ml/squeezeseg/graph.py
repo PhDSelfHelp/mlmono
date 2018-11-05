@@ -12,14 +12,12 @@ class SqueezeSegNet(ModelSkeleton, MLGraph):
 
     @classmethod
     def from_config(cls, global_config):
-        cls(global_config)
+        return cls(global_config)
 
     def __init__(self, global_config):
         self.global_config = global_config
-        self.model_skeleton_config = None
-
         # TODO(jdaaph): Use an easy to understand method to call ModelSkeleton ctor.
-        super().__init__(self.model_skeleton_config)
+        super().__init__(self.global_config)
 
         # Initialize constants.
         BATCH_SIZE = self.global_config.trainer.batch_size
@@ -90,7 +88,7 @@ class SqueezeSegNet(ModelSkeleton, MLGraph):
                 self._activation_summary(
                     self.prob[:, :, :, cls_id], 'prob_' + cls_name)
 
-    def add_forward_graph(self, features, mode):
+    def add_forward_pass(self, features, mode):
         """NN architecture."""
 
         is_training = (mode == tf.estimator.ModeKeys.TRAIN)
@@ -157,17 +155,17 @@ class SqueezeSegNet(ModelSkeleton, MLGraph):
         drop13 = tf.nn.dropout(fire13_fuse, self.keep_prob, name='drop13')
 
         conv14 = self._conv_layer(
-            'conv14_prob', drop13, filters=NUM_CLASS, size=3, stride=1,
+            'conv14_prob', drop13, filters=self.NUM_CLASS, size=3, stride=1,
             padding='SAME', relu=False, stddev=0.1)
 
         bilateral_filter_weights = self._bilateral_filter_layer(
             'bilateral_filter', self.lidar_input[:, :, :, :3],  # x, y, z
-            thetas=[BILATERAL_THETA_A, BILATERAL_THETA_R],
-            sizes=[LCN_HEIGHT, LCN_WIDTH], stride=1)
+            thetas=[self.BILATERAL_THETA_A, self.BILATERAL_THETA_R],
+            sizes=[self.LCN_HEIGHT, self.LCN_WIDTH], stride=1)
 
         self.output_prob = self._recurrent_crf_layer(
             'recurrent_crf', conv14, bilateral_filter_weights,
-            sizes=[LCN_HEIGHT, LCN_WIDTH], num_iterations=RCRF_ITER,
+            sizes=[self.LCN_HEIGHT, self.LCN_WIDTH], num_iterations=self.RCRF_ITER,
             padding='SAME'
         )
 

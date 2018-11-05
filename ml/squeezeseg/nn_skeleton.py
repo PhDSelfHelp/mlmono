@@ -54,8 +54,14 @@ def _variable_with_weight_decay(name, shape, wd, initializer, trainable=True):
 class ModelSkeleton(object):
     """Base class of NN detection components."""
 
-    def __init__(self, model_skeleton_config):
-        self.mc = model_skeleton_config
+    def __init__(self, global_config):
+        self.LOAD_PRETRAINED_MODEL = False
+        self.WEIGHT_DECAY = global_config.trainer.weight_decay
+        self.BATCH_NORM_EPSILON = 1e-5
+        self.DEBUG_MODE = True
+        self.BATCH_SIZE = global_config.trainer.batch_size
+        self.NUM_CLASS = global_config.io.num_class
+        self.BI_FILTER_COEF = global_config.graph.bi_filter_coef
 
     def _conv_bn_layer(
             self, inputs, conv_param_name, bn_param_name, scale_param_name, filters,
@@ -82,12 +88,11 @@ class ModelSkeleton(object):
         Returns:
           A convolutional layer operation.
         """
-        mc = self.mc
 
         with tf.variable_scope(conv_param_name) as scope:
             channels = inputs.get_shape()[3]
 
-            if mc.LOAD_PRETRAINED_MODEL:
+            if self.LOAD_PRETRAINED_MODEL:
                 cw = self.caffemodel_weight
                 kernel_val = np.transpose(cw[conv_param_name][0], [2, 3, 1, 0])
                 if conv_with_bias:
@@ -110,7 +115,7 @@ class ModelSkeleton(object):
             # shape [h, w, in, out]
             kernel = _variable_with_weight_decay(
                 'kernels', shape=[size, size, int(channels), filters],
-                wd=mc.WEIGHT_DECAY, initializer=kernel_val, trainable=(not freeze))
+                wd=self.WEIGHT_DECAY, initializer=kernel_val, trainable=(not freeze))
             self.model_params += [kernel]
             if conv_with_bias:
                 biases = _variable_on_device('biases', [filters], bias_val,
@@ -134,7 +139,7 @@ class ModelSkeleton(object):
 
             conv = tf.nn.batch_normalization(
                 conv, mean=mean, variance=var, offset=beta, scale=gamma,
-                variance_epsilon=mc.BATCH_NORM_EPSILON, name='batch_norm')
+                variance_epsilon=self.BATCH_NORM_EPSILON, name='batch_norm')
 
             self.model_size_counter.append(
                 (conv_param_name, (1 + size * size * int(channels)) * filters)
@@ -175,9 +180,8 @@ class ModelSkeleton(object):
           A convolutional layer operation.
         """
 
-        mc = self.mc
         use_pretrained_param = False
-        if mc.LOAD_PRETRAINED_MODEL:
+        if self.LOAD_PRETRAINED_MODEL:
             cw = self.caffemodel_weight
             if layer_name in cw:
                 kernel_val = np.transpose(cw[layer_name][0], [2, 3, 1, 0])
@@ -194,7 +198,7 @@ class ModelSkeleton(object):
                 print('Cannot find {} in the pretrained model. Use randomly initialized '
                       'parameters'.format(layer_name))
 
-        if mc.DEBUG_MODE:
+        if self.DEBUG_MODE:
             print('Input tensor shape to {}: {}'.format(
                 layer_name, inputs.get_shape()))
 
@@ -204,7 +208,7 @@ class ModelSkeleton(object):
             # re-order the caffe kernel with shape [out, in, h, w] -> tf kernel with
             # shape [h, w, in, out]
             if use_pretrained_param:
-                if mc.DEBUG_MODE:
+                if self.DEBUG_MODE:
                     print('Using pretrained model for {}'.format(layer_name))
                 kernel_init = tf.constant(kernel_val, dtype=tf.float32)
                 bias_init = tf.constant(bias_val, dtype=tf.float32)
@@ -218,7 +222,7 @@ class ModelSkeleton(object):
 
             kernel = _variable_with_weight_decay(
                 'kernels', shape=[size, size, int(channels), filters],
-                wd=mc.WEIGHT_DECAY, initializer=kernel_init, trainable=(not freeze))
+                wd=self.WEIGHT_DECAY, initializer=kernel_init, trainable=(not freeze))
 
             biases = _variable_on_device('biases', [filters], bias_init,
                                          trainable=(not freeze))
@@ -288,11 +292,10 @@ class ModelSkeleton(object):
         else:
             stride_h, stride_w = stride[0], stride[1]
 
-        mc = self.mc
         # TODO(bichen): Currently do not support pretrained parameters for deconv
         # layer.
 
-        if mc.DEBUG_MODE:
+        if self.DEBUG_MODE:
             print('Input tensor shape to {}: {}'.format(
                 layer_name, inputs.get_shape()))
 
@@ -324,7 +327,7 @@ class ModelSkeleton(object):
                                               2 == 1) else (factor_w - 0.5)
                 og_w = np.reshape(np.arange(size_w), (size_h, -1))
                 up_kernel = (1 - np.abs(og_w - center_w)/factor_w)
-                for c in xrange(channels):
+                for c in range(channels):
                     kernel_init[:, :, c, c] = up_kernel
 
                 bias_init = tf.constant_initializer(0.0)
@@ -338,7 +341,7 @@ class ModelSkeleton(object):
             # input tensor.
             kernel = _variable_with_weight_decay(
                 'kernels', shape=[size_h, size_w, filters, channels],
-                wd=mc.WEIGHT_DECAY, initializer=kernel_init, trainable=(not freeze))
+                wd=self.WEIGHT_DECAY, initializer=kernel_init, trainable=(not freeze))
             biases = _variable_on_device(
                 'biases', [filters], bias_init, trainable=(not freeze))
             self.model_params += [kernel, biases]
@@ -346,7 +349,7 @@ class ModelSkeleton(object):
             # TODO(bichen): fix this
             deconv = tf.nn.conv2d_transpose(
                 inputs, kernel,
-                [mc.BATCH_SIZE, stride_h*in_height, stride_w*in_width, filters],
+                [self.BATCH_SIZE, stride_h*in_height, stride_w*in_width, filters],
                 [1, stride_h, stride_w, 1], padding=padding,
                 name='deconv')
             deconv_bias = tf.nn.bias_add(deconv, biases, name='bias_add')
@@ -415,17 +418,16 @@ class ModelSkeleton(object):
         Returns:
           A fully connected layer operation.
         """
-        mc = self.mc
 
         use_pretrained_param = False
-        if mc.LOAD_PRETRAINED_MODEL:
+        if self.LOAD_PRETRAINED_MODEL:
             cw = self.caffemodel_weight
             if layer_name in cw:
                 use_pretrained_param = True
                 kernel_val = cw[layer_name][0]
                 bias_val = cw[layer_name][1]
 
-        if mc.DEBUG_MODE:
+        if self.DEBUG_MODE:
             print('Input tensor shape to {}: {}'.format(
                 layer_name, inputs.get_shape()))
 
@@ -471,7 +473,7 @@ class ModelSkeleton(object):
                               'use randomly initialized parameter'.format(layer_name))
 
             if use_pretrained_param:
-                if mc.DEBUG_MODE:
+                if self.DEBUG_MODE:
                     print('Using pretrained model for {}'.format(layer_name))
                 kernel_init = tf.constant(kernel_val, dtype=tf.float32)
                 bias_init = tf.constant(bias_val, dtype=tf.float32)
@@ -484,7 +486,7 @@ class ModelSkeleton(object):
                 bias_init = tf.constant_initializer(bias_init_val)
 
             weights = _variable_with_weight_decay(
-                'weights', shape=[dim, hiddens], wd=mc.WEIGHT_DECAY,
+                'weights', shape=[dim, hiddens], wd=self.WEIGHT_DECAY,
                 initializer=kernel_init)
             biases = _variable_on_device('biases', [hiddens], bias_init)
             self.model_params += [weights, biases]
@@ -524,29 +526,28 @@ class ModelSkeleton(object):
         """
         assert num_iterations >= 1, 'number of iterations should >= 1'
 
-        mc = self.mc
         with tf.variable_scope(layer_name) as scope:
             # initialize compatibilty matrices
             compat_kernel_init = tf.constant(
                 np.reshape(
-                    np.ones((mc.NUM_CLASS, mc.NUM_CLASS)) -
-                    np.identity(mc.NUM_CLASS),
-                    [1, 1, mc.NUM_CLASS, mc.NUM_CLASS]
+                    np.ones((self.NUM_CLASS, self.NUM_CLASS)) -
+                    np.identity(self.NUM_CLASS),
+                    [1, 1, self.NUM_CLASS, self.NUM_CLASS]
                 ),
                 dtype=tf.float32
             )
             bi_compat_kernel = _variable_on_device(
                 name='bilateral_compatibility_matrix',
-                shape=[1, 1, mc.NUM_CLASS, mc.NUM_CLASS],
-                initializer=compat_kernel_init*mc.BI_FILTER_COEF,
+                shape=[1, 1, self.NUM_CLASS, self.NUM_CLASS],
+                initializer=compat_kernel_init*self.BI_FILTER_COEF,
                 trainable=True
             )
             self._activation_summary(bi_compat_kernel, 'bilateral_compat_mat')
 
             angular_compat_kernel = _variable_on_device(
                 name='angular_compatibility_matrix',
-                shape=[1, 1, mc.NUM_CLASS, mc.NUM_CLASS],
-                initializer=compat_kernel_init * mc.ANG_FILTER_COEF,
+                shape=[1, 1, self.NUM_CLASS, self.NUM_CLASS],
+                initializer=compat_kernel_init * self.ANG_FILTER_COEF,
                 trainable=True
             )
             self._activation_summary(
@@ -555,21 +556,21 @@ class ModelSkeleton(object):
             self.model_params += [bi_compat_kernel, angular_compat_kernel]
 
             condensing_kernel = tf.constant(
-                utils.condensing_matrix(sizes[0], sizes[1], mc.NUM_CLASS),
+                utils.condensing_matrix(sizes[0], sizes[1], self.NUM_CLASS),
                 dtype=tf.float32,
                 name='condensing_kernel'
             )
 
             angular_filters = tf.constant(
                 utils.angular_filter_kernel(
-                    sizes[0], sizes[1], mc.NUM_CLASS, mc.ANG_THETA_A**2),
+                    sizes[0], sizes[1], self.NUM_CLASS, self.ANG_THETA_A**2),
                 dtype=tf.float32,
                 name='angular_kernel'
             )
 
             bi_angular_filters = tf.constant(
                 utils.angular_filter_kernel(
-                    sizes[0], sizes[1], mc.NUM_CLASS, mc.BILATERAL_THETA_A**2),
+                    sizes[0], sizes[1], self.NUM_CLASS, self.BILATERAL_THETA_A**2),
                 dtype=tf.float32,
                 name='bi_angular_kernel'
             )
@@ -637,7 +638,6 @@ class ModelSkeleton(object):
         assert sizes[0] % 2 == 1 and sizes[1] % 2 == 1, \
             'Currently only support odd filter size.'
 
-        mc = self.mc
         size_z, size_a = sizes
         pad_z, pad_a = size_z//2, size_a//2
         half_filter_dim = (size_z*size_a)//2
@@ -697,7 +697,6 @@ class ModelSkeleton(object):
         assert sizes[0] % 2 == 1 and sizes[1] % 2 == 1, \
             'Currently only support odd filter size.'
 
-        mc = self.mc
         theta_a, theta_r = thetas
         size_z, size_a = sizes
         pad_z, pad_a = size_z//2, size_a//2
@@ -733,9 +732,9 @@ class ModelSkeleton(object):
                 - condensed_input[:, :, :, 2::in_channel]
 
             bi_filters = []
-            for cls in range(mc.NUM_CLASS):
-                theta_a = mc.BILATERAL_THETA_A[cls]
-                theta_r = mc.BILATERAL_THETA_R[cls]
+            for cls in range(self.NUM_CLASS):
+                theta_a = self.BILATERAL_THETA_A[cls]
+                theta_r = self.BILATERAL_THETA_R[cls]
                 bi_filter = tf.exp(-(diff_x ** 2 + diff_y ** 2 +
                                      diff_z ** 2) / 2 / theta_r ** 2)
                 bi_filters.append(bi_filter)
