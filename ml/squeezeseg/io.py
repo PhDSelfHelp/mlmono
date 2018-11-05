@@ -76,13 +76,12 @@ class KittiSqueezeSegIO(TFRecordIO):
     @staticmethod
     def parse_file(example_proto):
         features_format = {
-            'lidar_input': tf.FixedLenFeature([], tf.float32),
-            'lidar_mask' : tf.FixedLenFeature([], tf.float32),
-            'weight'     : tf.FixedLenFeature([], tf.float32),
-            'label'      : tf.FixedLenFeature([], tf.float32),
+            'lidar_input': tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
+            'lidar_mask' : tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
+            'weight'     : tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
+            'label'      : tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
         }
         parsed_features = tf.parse_single_example(example_proto, features_format)
-        print(tf.shape(parsed_features['lidar_input']))
         features = {
             'lidar_input'   : tf.reshape(parsed_features['lidar_input'],
                                          KittiSqueezeSegIO.DATA_SHAPE_X),
@@ -91,7 +90,8 @@ class KittiSqueezeSegIO(TFRecordIO):
             'weight'        : tf.reshape(parsed_features['weight'],
                                          KittiSqueezeSegIO.DATA_SHAPE_Y),
         }
-        labels = tf.reshape(parsed_features['label'], KittiSqueezeSegIO.DATA_SHAPE_Y)
+        labels = tf.reshape(parsed_features['label'],
+                            KittiSqueezeSegIO.DATA_SHAPE_Y)
         return features, labels
 
     @staticmethod

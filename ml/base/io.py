@@ -127,7 +127,7 @@ class TFRecordIO(MLIO):
                 tf.data.TFRecordDataset,
                 cycle_length=self.interleave_cycle,
                 block_length=self.interleave_block))
-        dataset = dataset.map(lambda filename: self.parse_file(filename))
+        dataset = dataset.map(lambda raw: self.parse_file(raw))
 
         # The data_shuffle_buffer should be some value > rows in single data shard (record).
         dataset = dataset.batch(batch_size=self.batch_size)
