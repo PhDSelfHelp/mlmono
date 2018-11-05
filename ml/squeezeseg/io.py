@@ -162,25 +162,30 @@ class KittiSqueezeSegIO(TFRecordIO):
         if verbose:
             msg = "Serializing {:d} frames into {}".format(num_frames, file_path)
             _logger.info(msg)
-        lidar_mask = np.reshape(
-            (X[:, :, KittiSqueezeSegIO.DEPTH_TAG] > 0), 
-            (self.zenith_level, self.azimuth_level, num_frames)
-        )
-        lidar_input = X[:, :, :KittiSqueezeSegIO.LABEL_TAG]
-        label = X[:, :, :KittiSqueezeSegIO.LABEL_TAG]
-        weight = np.zeros(label.shape)
-        for l in range(self.num_class):
-            weight[label==l] = KittiSqueezeSegIO.CLS_LOSS_WEIGHT[int(l)]
-        d_feature = {
-            'lidar_mask': dtype_feature_x(lidar_mask.ravel()),
-            'lidar_input': dtype_feature_x(lidar_input.ravel()),
-            'label': dtype_feature_x(label.ravel()),
-            'weight': dtype_feature_x(weight.ravel()),
-        }
-        features = tf.train.Features(feature=d_feature)
-        example = tf.train.Example(features=features)
-        serialized = example.SerializeToString()
-        writer.write(serialized)
+
+        for frame_idx in range(num_frames):
+            frame_X = X[:,:,:,frame_idx]
+
+            lidar_mask = np.reshape(
+                (frame_X[:, :, KittiSqueezeSegIO.DEPTH_TAG] > 0), 
+                (self.zenith_level, self.azimuth_level, num_frames)
+            )
+            lidar_input = frame_X[:, :, :KittiSqueezeSegIO.LABEL_TAG]
+            label = frame_X[:, :, :KittiSqueezeSegIO.LABEL_TAG]
+            weight = np.zeros(label.shape)
+            for l in range(self.num_class):
+                weight[label==l] = KittiSqueezeSegIO.CLS_LOSS_WEIGHT[int(l)]
+            d_feature = {
+                'lidar_mask': dtype_feature_x(lidar_mask.ravel()),
+                'lidar_input': dtype_feature_x(lidar_input.ravel()),
+                'label': dtype_feature_x(label.ravel()),
+                'weight': dtype_feature_x(weight.ravel()),
+            }
+            features = tf.train.Features(feature=d_feature)
+            example = tf.train.Example(features=features)
+            serialized = example.SerializeToString()
+            writer.write(serialized)
+
         writer.close()
 
         if verbose:
