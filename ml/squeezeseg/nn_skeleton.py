@@ -654,7 +654,6 @@ class ModelSkeleton(object):
                 inputs, bi_angular_filters, [1, 1, 1, 1], padding=padding,
                 name='bi_angular_filtered_term'
             )
-
             condensed_input = tf.reshape(
                 tf.nn.conv2d(
                     inputs*self.lidar_mask, condensing_kernel, [1, 1, 1, 1], padding=padding,

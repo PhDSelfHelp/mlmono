@@ -42,14 +42,16 @@ class KittiSqueezeSegIO(TFRecordIO):
         io.zenith_level = io_config.zenith_level
         io.azimuth_level = io_config.azimuth_level
 
+        io.data_base_dir = io_config.data_base_dir
+
         io.num_class = getattr(io_config, 'num_class', KittiSqueezeSegIO.NUM_CLASS)
         return io
 
     @staticmethod
-    def download_data_if_not_exist(data_dir):
+    def download_data_if_not_exist(data_base_dir):
 
         def found_extracted():
-            path = os.path.join(data_dir, 'lidar_2d')
+            path = os.path.join(data_base_dir, 'lidar_2d')
             pattern = os.path.join(path, '*.npy')
             return tf.gfile.Exists(path) and \
                    len(tf.gfile.Glob(pattern)) == KittiSqueezeSegIO.FULL_NUM_FILES
@@ -102,7 +104,7 @@ class KittiSqueezeSegIO(TFRecordIO):
         self.tfrecord_data_dir = os.path.join(self.data_dir, 'lidar_2d_tfrecords')
         create_dir_if_not_exist(self.tfrecord_data_dir)
         _logger.info("Creating tf records : ", self.tfrecord_data_dir)
-        numpy_fn_list = tf.gfile.Glob(os.path.join(self.data_dir, '**/*.npy'))
+        numpy_fn_list = tf.gfile.Glob(os.path.join(self.data_base_dir, '**/*.npy'))
         group_to_fnlist = _group_numpy_fns(numpy_fn_list)
 
         for group in tqdm(group_to_fnlist):
@@ -171,7 +173,7 @@ class KittiSqueezeSegIO(TFRecordIO):
                 (self.zenith_level, self.azimuth_level, 1)
             )
             lidar_input = frame_X[:, :, :KittiSqueezeSegIO.LABEL_TAG]
-            label = frame_X[:, :, :KittiSqueezeSegIO.LABEL_TAG]
+            label = frame_X[:, :, KittiSqueezeSegIO.LABEL_TAG]
             weight = np.zeros(label.shape)
             for l in range(self.num_class):
                 weight[label==l] = KittiSqueezeSegIO.CLS_LOSS_WEIGHT[int(l)]
