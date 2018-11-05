@@ -168,7 +168,7 @@ class KittiSqueezeSegIO(TFRecordIO):
 
             lidar_mask = np.reshape(
                 (frame_X[:, :, KittiSqueezeSegIO.DEPTH_TAG] > 0), 
-                (self.zenith_level, self.azimuth_level, num_frames)
+                (self.zenith_level, self.azimuth_level, 1)
             )
             lidar_input = frame_X[:, :, :KittiSqueezeSegIO.LABEL_TAG]
             label = frame_X[:, :, :KittiSqueezeSegIO.LABEL_TAG]

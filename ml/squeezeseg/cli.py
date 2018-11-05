@@ -1,6 +1,6 @@
 import click
 
-from ml.base import MLConfig
+from ml.base import GlobalConfig
 from ml.squeezeseg.io import KittiSqueezeSegIO
 
 
@@ -9,7 +9,7 @@ from ml.squeezeseg.io import KittiSqueezeSegIO
               required=True,
               help='The config file path.') 
 def npy2tfrecord(config):
-    config = MLConfig.from_file(config)
+    config = GlobalConfig.from_file(config)
 
     # TODO(jxwulittlebean): The command line flags should override config here.
     io = KittiSqueezeSegIO.from_config(config)
