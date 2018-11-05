@@ -18,10 +18,6 @@ class MLEstimator(object):
         self.io = io
         self.estimator = self._gen_estimator()
 
-        self.output = None
-        self.labels = None
-        self.loss = None
-
         def train():
             self.estimator.train(
                 input_fn = self.io.gen_input_fn(self.trainer.num_epochs)
@@ -61,7 +57,7 @@ class MLEstimator(object):
                 self.output = self.graph.output
 
                 # Construct trainer.
-                self.trainer.register_loss_to_graph(self.graph, self.output, self.labels)
+                self.trainer.register_loss_to_graph(self.graph, self.output, labels)
                 self.trainer.register_op_and_hook()
                 self.loss = self.trainer.loss
 

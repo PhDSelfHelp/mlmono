@@ -98,6 +98,8 @@ class SqueezeSegNet(ModelSkeleton, MLGraph):
                 self._activation_summary(
                     self.prob[:, :, :, cls_id], 'prob_' + cls_name)
 
+            self.output = self.prob
+
     def add_forward_pass(self, features, mode):
         """NN architecture."""
 
@@ -106,9 +108,6 @@ class SqueezeSegNet(ModelSkeleton, MLGraph):
         # Input parsing for the graph.
         self.keep_prob = 0.5 if is_training else 1
         self.lidar_input = features['lidar_input']
-        print(self.lidar_input)
-        print(type(self.lidar_input))
-        print()
         self.lidar_mask = features['lidar_mask']
         self.loss_weight = features['weight']
         
@@ -181,7 +180,6 @@ class SqueezeSegNet(ModelSkeleton, MLGraph):
             sizes=[self.LCN_HEIGHT, self.LCN_WIDTH], num_iterations=self.RCRF_ITER,
             padding='SAME'
         )
-
         self._add_output_graph()
 
         return self.output_prob

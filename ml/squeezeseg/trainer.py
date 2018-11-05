@@ -1,3 +1,5 @@
+import tensorflow as tf
+
 from ml.base.trainer import MLTrainer
 from ml.base.base_utils import find_subclass_by_name
 
@@ -34,20 +36,21 @@ class SqueezeSegTrainer(MLTrainer):
         return cls(global_config)
 
     def register_op_and_hook(self):
-        raise NotImplementedError
+        pass
     
-    def register_loss_to_graph(self, graph):
+    def register_loss_to_graph(self, graph, graph_output, labels):
         """Define the loss operation."""
         with tf.variable_scope('cls_loss') as scope:
+            labels = tf.cast(labels, tf.int32)
             self.cls_loss = tf.identity(
                 tf.reduce_sum(
                     tf.nn.sparse_softmax_cross_entropy_with_logits(
-                        labels=tf.reshape(self.label, (-1, )),
-                        logits=tf.reshape(self.output_prob, (-1, self.num_class))
+                        labels=tf.reshape(labels, (-1, )),
+                        logits=tf.reshape(graph_output, (-1, self.num_class))
                     )
-                    * tf.reshape(self.lidar_mask, (-1, ))
-                    * tf.reshape(self.loss_weight, (-1, ))
-                ) / tf.reduce_sum(self.lidar_mask) * self.cls_loss_coef,
+                    * tf.reshape(graph.lidar_mask, (-1, ))
+                    * tf.reshape(graph.loss_weight, (-1, ))
+                ) / tf.reduce_sum(graph.lidar_mask) * self.cls_loss_coef,
                 name='cls_loss'
             )
             tf.add_to_collection('losses', self.cls_loss)
