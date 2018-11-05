@@ -102,7 +102,6 @@ class TFRecordIO(MLIO):
         # Generate tf dataset.
         if self.data_enable_download:
             self.download_data_if_not_exist(self.data_dir)
-        self.dataset = self._gen_tf_dataset()
 
         # def input_fn():
         #     self.iterator = self.dataset.make_one_shot_iterator()
@@ -111,11 +110,17 @@ class TFRecordIO(MLIO):
         #     return features, labels
 
         def input_fn():
+            # Generate dataset so that input_fn's implicit context and graph is used
+            # in the dataset generation.
+            self.dataset = self._gen_tf_dataset()
             return self.dataset
 
         return input_fn
 
     def _gen_tf_dataset(self):
+        # TODO(jdaaph) (URGENT): clean the method of commented code and put config
+        #                        constants declared only in the ctor.
+
         list_files = tf.data.Dataset.list_files(self.filenames)
         if is_training(self.mode):
             list_files = list_files.shuffle(self.io_config.fn_shuffle_buffer)
@@ -139,9 +144,9 @@ class TFRecordIO(MLIO):
 
         if is_training(self.mode):
             dataset = dataset.shuffle(self.io_config.data_shuffle_buffer)
-        dataset = dataset.repeat(num_epochs)
-        dataset = dataset.map(map_func=parse_iter,
-                              num_parallel_calls=self.num_parallel_parse)
+        dataset = dataset.repeat(self.global_config.trainer.num_epochs)
+        # dataset = dataset.map(map_func=parse_iter,
+        #                       num_parallel_calls=self.num_parallel_parse)
         return dataset
 
     @staticmethod

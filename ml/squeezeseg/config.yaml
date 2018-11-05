@@ -14,6 +14,7 @@ io:
     model_dir: /tmp/run_0/model
 
     fn_shuffle_buffer: 100
+    data_shuffle_buffer: 100
 
     azimuth_level: 512
     zenith_level: 64
