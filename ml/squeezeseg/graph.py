@@ -25,6 +25,16 @@ class SqueezeSegNet(ModelSkeleton, MLGraph):
         AZIMUTH_LEVEL = self.global_config.io.azimuth_level
         self.classes = self.global_config.io.classes
 
+        # TODO(jdaaph): Clean config hard coded.
+        self.LCN_HEIGHT         = 3
+        self.LCN_WIDTH          = 5
+        self.RCRF_ITER          = 3
+        self.BILATERAL_THETA_A  = np.array([.9, .9, .6, .6])
+        self.BILATERAL_THETA_R  = np.array([.015, .015, .01, .01])
+        self.BI_FILTER_COEF     = 0.1
+        self.ANG_THETA_A        = np.array([.9, .9, .6, .6])
+        self.ANG_FILTER_COEF = 0.02
+
         # a scalar tensor in range (0, 1]. Usually set to 0.5 in training phase and
         # 1.0 in evaluation phase
         # self.ph_keep_prob = tf.placeholder(tf.float32, name='keep_prob')
@@ -96,6 +106,9 @@ class SqueezeSegNet(ModelSkeleton, MLGraph):
         # Input parsing for the graph.
         self.keep_prob = 0.5 if is_training else 1
         self.lidar_input = features['lidar_input']
+        print(self.lidar_input)
+        print(type(self.lidar_input))
+        print()
         self.lidar_mask = features['lidar_mask']
         self.loss_weight = features['weight']
         

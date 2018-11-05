@@ -721,6 +721,9 @@ class ModelSkeleton(object):
             #     inputs[:, :, :], [batch, zenith, azimuth, 1]) \
             #     - condensed_input[:, :, :, ::in_channel]
 
+            # Autodetect batch size in graph definition.
+            batch = -1
+
             diff_x = tf.reshape(
                 inputs[:, :, :, 0], [batch, zenith, azimuth, 1]) \
                 - condensed_input[:, :, :, 0::in_channel]
