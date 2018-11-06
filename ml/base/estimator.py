@@ -22,7 +22,7 @@ class MLEstimator(object):
         print('enter training')
         self.estimator.train(
             input_fn = self.io.gen_input_fn(self.trainer.num_epochs),
-            steps=self.config.num_epochs,
+            steps=self.config.trainer.num_epochs,
         )
 
     @classmethod
