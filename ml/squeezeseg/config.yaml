@@ -43,7 +43,7 @@ trainer:
     momentum: 0.9
     lr_decay_factor: 0.5
 
-    batch_size: 12
+    batch_size: 32
 
 
 predictor:

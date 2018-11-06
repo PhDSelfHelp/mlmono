@@ -41,7 +41,7 @@ class MLEstimator(object):
         )
         return estimator
 
-    def _gen_model_fn(self, gpu_id=0):
+    def _gen_model_fn(self, gpu_id=2):
 
         def model_fn(features, labels, mode, params):
             # TODO(jdaaph): Add cpu and gpu flag.
