@@ -48,10 +48,10 @@ class KittiSqueezeSegIO(TFRecordIO):
         return io
 
     @staticmethod
-    def download_data_if_not_exist(data_base_dir):
+    def download_data_if_not_exist(data_dir):
 
         def found_extracted():
-            path = os.path.join(data_base_dir, 'lidar_2d')
+            path = os.path.join(data_dir, 'lidar_2d')
             pattern = os.path.join(path, '*.npy')
             return tf.gfile.Exists(path) and \
                    len(tf.gfile.Glob(pattern)) == KittiSqueezeSegIO.FULL_NUM_FILES
