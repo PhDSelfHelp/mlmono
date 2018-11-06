@@ -33,7 +33,7 @@ io:
 trainer: 
     trainer_name: SqueezeSegTrainer
 
-    num_epochs: 10000
+    num_epochs: 10000000
 
     cls_loss_coef: 15.0
     weight_decay: 0.0001
