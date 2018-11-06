@@ -101,6 +101,8 @@ class KittiSqueezeSegIO(TFRecordIO):
         return features, label
 
     def create_tf_record(self):
+        self.download_data_if_not_exist(self.data_base_dir)
+
         self.tfrecord_data_dir = os.path.join(self.data_dir, 'lidar_2d_tfrecords')
         create_dir_if_not_exist(self.tfrecord_data_dir)
         _logger.info("Creating tf records : ", self.tfrecord_data_dir)
