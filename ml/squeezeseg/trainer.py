@@ -29,7 +29,10 @@ class SqueezeSegTrainer(MLTrainer):
 
         # Other data related config constants.
         self.num_class = self.global_config.io.num_class
-        
+
+    @property
+    def global_step(self):
+        return tf.train.get_global_step()
 
     @classmethod
     def from_config(cls, global_config):
@@ -65,7 +68,6 @@ class SqueezeSegTrainer(MLTrainer):
     def register_train_graph(self):
         """Define the training operation."""
 
-        self.global_step = tf.Variable(0, name='global_step', trainable=False)
         lr = tf.train.exponential_decay(self.lr_base,
                                         self.global_step,
                                         self.decay_steps,
