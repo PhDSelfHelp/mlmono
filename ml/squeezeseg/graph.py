@@ -98,7 +98,7 @@ class SqueezeSegNet(ModelSkeleton, MLGraph):
                 self._activation_summary(
                     self.prob[:, :, :, cls_id], 'prob_' + cls_name)
 
-            self.output = self.prob
+            self.output = self.output_prob
 
     def add_forward_pass(self, features, mode):
         """NN architecture."""

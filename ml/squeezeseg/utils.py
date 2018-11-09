@@ -64,50 +64,6 @@ def rel_accuracy_at_thresh_fn(pred_ogm, gt_ogm, mask, thresh):
     ) / float(np.sum(mask))
 
 
-def evaluate_iou(label, pred, n_class, epsilon=1e-12):
-    """Evaluation script to compute pixel level IoU.
-
-    Args:
-      label: N-d array of shape [batch, W, H], where each element is a class
-          index.
-      pred: N-d array of shape [batch, W, H], the each element is the predicted
-          class index.
-      n_class: number of classes
-      epsilon: a small value to prevent division by 0
-
-    Returns:
-      IoU: array of lengh n_class, where each element is the average IoU for this
-          class.
-      tps: same shape as IoU, where each element is the number of TP for each
-          class.
-      fps: same shape as IoU, where each element is the number of FP for each
-          class.
-      fns: same shape as IoU, where each element is the number of FN for each
-          class.
-    """
-
-    assert label.shape == pred.shape, \
-        'label and pred shape mismatch: {} vs {}'.format(
-            label.shape, pred.shape)
-
-    ious = np.zeros(n_class)
-    tps = np.zeros(n_class)
-    fns = np.zeros(n_class)
-    fps = np.zeros(n_class)
-
-    for cls_id in range(n_class):
-        tp = np.sum(pred[label == cls_id] == cls_id)
-        fp = np.sum(label[pred == cls_id] != cls_id)
-        fn = np.sum(pred[label == cls_id] != cls_id)
-
-        ious[cls_id] = tp / (tp + fn + fp + epsilon)
-        tps[cls_id] = tp
-        fps[cls_id] = fp
-        fns[cls_id] = fn
-
-    return ious, tps, fps, fns
-
-
 def condensing_matrix(size_z, size_a, in_channel):
     assert size_z % 2 == 1 and size_a % 2 == 1, \
         'size_z and size_a should be odd number'
