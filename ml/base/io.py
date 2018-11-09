@@ -145,8 +145,8 @@ class TFRecordIO(MLIO):
         if is_training(self.mode):
             dataset = dataset.shuffle(self.io_config.data_shuffle_buffer)
         dataset = dataset.repeat(self.global_config.trainer.num_epochs)
-        # dataset = dataset.map(map_func=parse_iter,
-        #                       num_parallel_calls=self.num_parallel_parse)
+        dataset = dataset.map(map_func=self.parse_iter,
+                              num_parallel_calls=self.num_parallel_parse)
         return dataset
 
     @staticmethod

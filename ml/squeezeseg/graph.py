@@ -33,7 +33,7 @@ class SqueezeSegNet(ModelSkeleton, MLGraph):
         self.BILATERAL_THETA_R  = np.array([.015, .015, .01, .01])
         self.BI_FILTER_COEF     = 0.1
         self.ANG_THETA_A        = np.array([.9, .9, .6, .6])
-        self.ANG_FILTER_COEF = 0.02
+        self.ANG_FILTER_COEF    = 0.02
 
         # a scalar tensor in range (0, 1]. Usually set to 0.5 in training phase and
         # 1.0 in evaluation phase

@@ -98,6 +98,9 @@ class KittiSqueezeSegIO(TFRecordIO):
 
     @staticmethod
     def parse_iter(features, label):
+        mean = KittiSqueezeSegIO.INPUT_MEAN
+        std = KittiSqueezeSegIO.INPUT_STD
+        features['lidar_input'] =  (features['lidar_input'] - mean) / std
         return features, label
 
     def create_tf_record(self):
