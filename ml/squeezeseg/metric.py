@@ -66,9 +66,9 @@ class IOUSummary(StepMetric):
         self.iou_summary_ops = iou_summary_ops
 
         # Run evaluation on the batch
-        ious, _, _, _ = evaluate_iou(label_per_batch,
-                                     pred_cls * np.squeeze(lidar_mask_per_batch),
-                                     self.NUM_CLASS)
+        # ious, _, _, _ = self.evaluate_iou(label_per_batch,
+        #                                   pred_cls * np.squeeze(lidar_mask_per_batch),
+        #                                   self.NUM_CLASS)
 
     @staticmethod
     def _evaluate_iou(label, pred, n_class, epsilon=1e-12):
