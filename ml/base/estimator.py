@@ -59,6 +59,9 @@ class MLEstimator(object):
                 # Construct metrics.
                 self.metric_collection.register_step_metric_to_graph(self.graph)
 
+                # Add graph to IO object.
+                self.io.summary_writer.add_graph(tf.get_default_graph())
+
             return tf.estimator.EstimatorSpec(
                 mode=mode,
                 predictions=self.output,

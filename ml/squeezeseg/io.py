@@ -38,7 +38,7 @@ class KittiSqueezeSegIO(TFRecordIO):
         io_config = global_config.io
         io = cls(global_config)
         io.summary_writer = tf.summary.FileWriter(
-            io.logs_dir, graph=tf.get_default_graph())
+            io.logs_dir, graph=None)
         io.zenith_level = io_config.zenith_level
         io.azimuth_level = io_config.azimuth_level
 
