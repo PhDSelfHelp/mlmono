@@ -134,17 +134,19 @@ class TFRecordIO(MLIO):
                 block_length=self.interleave_block))
         dataset = dataset.map(lambda raw: self.parse_file(raw))
 
-        # The data_shuffle_buffer should be some value > rows in single data shard (record).
-        dataset = dataset.batch(batch_size=self.batch_size)
         # dataset = dataset.apply(
         #     tf.contrib.data.parallel_interleave(
         #         lambda filename: self.parse_file(filename),
         #         cycle_length=self.interleave_cycle,
         #         block_length=self.interleave_block))
 
+        # Always shuffle before batch to promote randomness in the training data.
+        # The data_shuffle_buffer should be some value > rows in single data shard (record).
         if is_training(self.mode):
             dataset = dataset.shuffle(self.io_config.data_shuffle_buffer)
         dataset = dataset.repeat(self.global_config.trainer.num_epochs)
+        dataset = dataset.batch(batch_size=self.batch_size)
+
         dataset = dataset.map(map_func=self.parse_iter,
                               num_parallel_calls=self.num_parallel_parse)
         return dataset
