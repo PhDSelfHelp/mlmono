@@ -1,4 +1,4 @@
-from ml.base.config import MLConfig, GlobalConfig, CompConfig
+from ml.base.config import MLConfig, GlobalConfig
 
 from ml.base.graph import MLGraph
 

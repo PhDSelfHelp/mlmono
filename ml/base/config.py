@@ -40,7 +40,8 @@ class GlobalConfig(MLConfig):
 
     @classmethod
     def from_internal_file(cls, config_name):
-        pass
+        # TODO(jdaaph): Add automatically path finding from base dir.
+        raise NotImplementedError
 
     @classmethod
     def from_file(cls, fn):
@@ -66,7 +67,3 @@ class GlobalConfig(MLConfig):
             component_config_lst.append(config)
 
         return GlobalConfig(*component_config_lst)
-
-
-class CompConfig(MLConfig):
-    pass

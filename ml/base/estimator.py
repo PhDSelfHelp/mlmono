@@ -1,3 +1,4 @@
+import logging
 import tensorflow as tf
 
 from ml.base.graph import MLGraph
@@ -5,6 +6,9 @@ from ml.base.trainer import MLTrainer
 from ml.base.predictor import MLPredictor
 from ml.base.metric import MetricCollection
 from ml.base.io import MLIO
+
+
+_logger = logging.getLogger(name='MLEstimator')
 
 
 class MLEstimator(object):
@@ -19,11 +23,19 @@ class MLEstimator(object):
         self.estimator = self._gen_estimator()
 
     def train(self):
-        print('enter training')
+        _logger.info("Enter training.")
         self.estimator.train(
-            input_fn = self.io.gen_input_fn(self.trainer.num_epochs),
-            steps=self.config.trainer.num_epochs,
+            input_fn=self.io.gen_input_fn(self.trainer.num_steps),
+            steps=self.config.trainer.num_steps,
         )
+
+    def predict(self):
+        _logger.info("Enter prediction.")
+        raise NotImplementedError
+
+    def evaluate(self):
+        _logger.info("Enter prediction.")
+        raise NotImplementedError
 
     @classmethod
     def from_config(cls, config):

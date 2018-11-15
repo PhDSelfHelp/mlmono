@@ -76,7 +76,7 @@ class MLIO(object):
     def _gen_tf_dataset(self):
         raise NotImplementedError
 
-    def gen_input_fn(self, num_epochs):
+    def gen_input_fn(self, num_steps):
         raise NotImplementedError
 
     @staticmethod
@@ -98,16 +98,10 @@ class TFRecordIO(MLIO):
             io.logs_dir, graph=tf.get_default_graph())
         return io
 
-    def gen_input_fn(self, num_epochs):
+    def gen_input_fn(self, num_steps):
         # Generate tf dataset.
         if self.data_enable_download:
             self.download_data_if_not_exist(self.data_dir)
-
-        # def input_fn():
-        #     self.iterator = self.dataset.make_one_shot_iterator()
-        #     data_ite = iterator.get_next()
-        #     features, labels = self.parse_iter(data_ite)
-        #     return features, labels
 
         def input_fn():
             # Generate dataset so that input_fn's implicit context and graph is used
@@ -134,17 +128,11 @@ class TFRecordIO(MLIO):
                 block_length=self.interleave_block))
         dataset = dataset.map(lambda raw: self.parse_file(raw))
 
-        # dataset = dataset.apply(
-        #     tf.contrib.data.parallel_interleave(
-        #         lambda filename: self.parse_file(filename),
-        #         cycle_length=self.interleave_cycle,
-        #         block_length=self.interleave_block))
-
         # Always shuffle before batch to promote randomness in the training data.
         # The data_shuffle_buffer should be some value > rows in single data shard (record).
         if is_training(self.mode):
             dataset = dataset.shuffle(self.io_config.data_shuffle_buffer)
-        dataset = dataset.repeat(self.global_config.trainer.num_epochs)
+        dataset = dataset.repeat(self.global_config.trainer.num_steps)
         dataset = dataset.batch(batch_size=self.batch_size)
 
         dataset = dataset.map(map_func=self.parse_iter,
@@ -177,7 +165,7 @@ class KerasDatasetIO(MLIO):
         io.dataset = io._gen_tf_dataset()
         return io
 
-    def gen_input_fn(self, num_epochs):
+    def gen_input_fn(self, num_steps):
         self.dataset = self._gen_tf_dataset()
 
         def input_fn():

@@ -18,7 +18,7 @@ class SqueezeSegTrainer(MLTrainer):
         self.optimizer = None
 
         # Local config constants.
-        self.num_epochs = self.trainer_config.num_epochs
+        self.num_steps = self.trainer_config.num_steps
         self.lr_base = self.trainer_config.lr
         self.decay_steps = self.trainer_config.decay_steps
         self.lr_decay_factor = self.trainer_config.lr_decay_factor

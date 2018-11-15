@@ -16,14 +16,15 @@ class MetricCollection(object):
         all_metrics = cls(global_config)
         for metric_config in all_metrics.metric_config:
             subcls = find_subclass_by_name(MLMetric, metric_config.metric_name)
+            metric_obj = subcls.from_config(global_config, metric_config)
 
             metric_list = None
             if subcls in all_subclasses(StepMetric):
                 metric_list = all_metrics.step_metrics
             if subcls in all_subclasses(EndingMetric):
                 metric_list = all_metrics.ending_metrics
+            metric_list.append(metric_obj)
 
-            metric_list.append(subcls.from_config(global_config, metric_config))
         return all_metrics
 
     def register_step_metric_to_graph(self, graph):

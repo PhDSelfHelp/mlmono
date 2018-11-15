@@ -16,7 +16,8 @@ class SqueezeSegNet(ModelSkeleton, MLGraph):
 
     def __init__(self, global_config):
         self.global_config = global_config
-        # TODO(jdaaph): Use an easy to understand method to call ModelSkeleton ctor.
+
+        # Calls the ModelSkeleton ctor based on order of base class finding.
         super().__init__(self.global_config)
 
         # Initialize constants.
