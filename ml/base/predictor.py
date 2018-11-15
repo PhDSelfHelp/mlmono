@@ -11,6 +11,6 @@ class MLPredictor(object):
 
     @classmethod
     def from_config(cls, global_config):
-        predictor_config = global_config.metric
-        subcls = find_subclass_by_name(cls, predictor_config.metric_name)
+        predictor_config = global_config.predictor
+        subcls = find_subclass_by_name(cls, predictor_config.predictor_name)
         return subcls.from_config(global_config)

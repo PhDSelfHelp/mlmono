@@ -24,13 +24,13 @@ class KittiSqueezeSegIO(TFRecordIO):
     LABEL_TAG = 5
     DEPTH_TAG = 5
     DATA_SHAPE_X = (64, 512, 5)
-    DATA_SHAPE_Y = (64, 512, 1)
+    DATA_SHAPE_MASK = (64, 512, 1)
+    DATA_SHAPE_Y = (64, 512)
 
     INPUT_MEAN = np.array([[[10.88, 0.23, -1.04, 0.21, 12.12]]])
     INPUT_STD = np.array([[[11.47, 6.91, 0.86, 0.16, 12.32]]])
 
     NUM_CLASS = 4
-    CLASSES = ['unknown', 'car', 'pedestrian', 'cyclist']
     CLS_LOSS_WEIGHT = np.array([1/15.0, 1.0, 10.0, 10.0])
 
     @classmethod
@@ -38,9 +38,13 @@ class KittiSqueezeSegIO(TFRecordIO):
         io_config = global_config.io
         io = cls(global_config)
         io.summary_writer = tf.summary.FileWriter(
-            io.logs_dir, graph=tf.get_default_graph())
+            io.logs_dir, graph=None)
         io.zenith_level = io_config.zenith_level
         io.azimuth_level = io_config.azimuth_level
+
+        io.data_base_dir = io_config.data_base_dir
+
+        io.num_class = getattr(io_config, 'num_class', KittiSqueezeSegIO.NUM_CLASS)
         return io
 
     @staticmethod
@@ -74,29 +78,38 @@ class KittiSqueezeSegIO(TFRecordIO):
     @staticmethod
     def parse_file(example_proto):
         features_format = {
-            'lidar_input': tf.FixedLenFeature([], tf.float32),
-            'lidar_mask' : tf.FixedLenFeature([], tf.float32),
-            'weight'     : tf.FixedLenFeature([], tf.float32),
-            'labels'     : tf.FixedLenFeature([], tf.float32),
+            'lidar_input': tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
+            'lidar_mask' : tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
+            'weight'     : tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
+            'label'      : tf.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
         }
         parsed_features = tf.parse_single_example(example_proto, features_format)
         features = {
-            'lidar_input'   : parsed_features['lidar_input'],
-            'lidar_mask'    : parsed_features['lidar_mask'],
-            'weight'        : parsed_features['weight'],
+            'lidar_input'   : tf.reshape(parsed_features['lidar_input'],
+                                         KittiSqueezeSegIO.DATA_SHAPE_X),
+            'lidar_mask'    : tf.reshape(parsed_features['lidar_mask'],
+                                         KittiSqueezeSegIO.DATA_SHAPE_MASK),
+            'weight'        : tf.reshape(parsed_features['weight'],
+                                         KittiSqueezeSegIO.DATA_SHAPE_Y),
         }
-        labels = tf.sparse_tensor_to_dense(parsed_features['labels'])
+        labels = tf.reshape(parsed_features['label'],
+                            KittiSqueezeSegIO.DATA_SHAPE_Y)
         return features, labels
 
     @staticmethod
     def parse_iter(features, label):
+        mean = KittiSqueezeSegIO.INPUT_MEAN
+        std = KittiSqueezeSegIO.INPUT_STD
+        features['lidar_input'] =  (features['lidar_input'] - mean) / std
         return features, label
 
     def create_tf_record(self):
+        self.download_data_if_not_exist(self.data_base_dir)
+
         self.tfrecord_data_dir = os.path.join(self.data_dir, 'lidar_2d_tfrecords')
         create_dir_if_not_exist(self.tfrecord_data_dir)
         _logger.info("Creating tf records : ", self.tfrecord_data_dir)
-        numpy_fn_list = tf.gfile.Glob(os.path.join(self.data_dir, '**/*.npy'))
+        numpy_fn_list = tf.gfile.Glob(os.path.join(self.data_base_dir, '**/*.npy'))
         group_to_fnlist = _group_numpy_fns(numpy_fn_list)
 
         for group in tqdm(group_to_fnlist):
@@ -156,25 +169,30 @@ class KittiSqueezeSegIO(TFRecordIO):
         if verbose:
             msg = "Serializing {:d} frames into {}".format(num_frames, file_path)
             _logger.info(msg)
-        lidar_mask = np.reshape(
-            (X[:, :, KittiSqueezeSegIO.DEPTH_TAG] > 0), 
-            (self.zenith_level, self.azimuth_level, num_frames)
-        )
-        lidar_input = X[:, :, :KittiSqueezeSegIO.LABEL_TAG]
-        label = X[:, :, :KittiSqueezeSegIO.LABEL_TAG]
-        weight = np.zeros(label.shape)
-        for l in range(KittiSqueezeSegIO.NUM_CLASS):
-            weight[label==l] = KittiSqueezeSegIO.CLS_LOSS_WEIGHT[int(l)]
-        d_feature = {
-            'lidar_mask': dtype_feature_x(lidar_mask.ravel()),
-            'lidar_input': dtype_feature_x(lidar_input.ravel()),
-            'label': dtype_feature_x(label.ravel()),
-            'weight': dtype_feature_x(weight.ravel()),
-        }
-        features = tf.train.Features(feature=d_feature)
-        example = tf.train.Example(features=features)
-        serialized = example.SerializeToString()
-        writer.write(serialized)
+
+        for frame_idx in range(num_frames):
+            frame_X = X[:,:,:,frame_idx]
+
+            lidar_mask = np.reshape(
+                (frame_X[:, :, KittiSqueezeSegIO.DEPTH_TAG] > 0), 
+                (self.zenith_level, self.azimuth_level, 1)
+            )
+            lidar_input = frame_X[:, :, :KittiSqueezeSegIO.LABEL_TAG]
+            label = frame_X[:, :, KittiSqueezeSegIO.LABEL_TAG]
+            weight = np.zeros(label.shape)
+            for l in range(self.num_class):
+                weight[label==l] = KittiSqueezeSegIO.CLS_LOSS_WEIGHT[int(l)]
+            d_feature = {
+                'lidar_mask': dtype_feature_x(lidar_mask.ravel()),
+                'lidar_input': dtype_feature_x(lidar_input.ravel()),
+                'label': dtype_feature_x(label.ravel()),
+                'weight': dtype_feature_x(weight.ravel()),
+            }
+            features = tf.train.Features(feature=d_feature)
+            example = tf.train.Example(features=features)
+            serialized = example.SerializeToString()
+            writer.write(serialized)
+
         writer.close()
 
         if verbose:

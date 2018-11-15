@@ -14,6 +14,35 @@ class MLConfig(object):
         '''
         return getattr(self._internal, attr)
 
+    def __init__(self, internal_munch):
+        self._internal = internal_munch
+
+    @classmethod
+    def from_dict(cls, dic):
+        '''
+        Args:
+            dict: dictionary of a config.
+        '''
+        config = munch.munchify(dic)
+        return MLConfig(config)
+
+
+class GlobalConfig(MLConfig):
+
+    def __init__(self, global_config, graph, trainer, predictor, io, metric):
+        self._internal = global_config
+        self.global_config = global_config
+        self.graph = graph
+        self.trainer = trainer
+        self.predictor = predictor
+        self.io = io
+        self.metric = metric
+
+    @classmethod
+    def from_internal_file(cls, config_name):
+        # TODO(jdaaph): Add automatically path finding from base dir.
+        raise NotImplementedError
+
     @classmethod
     def from_file(cls, fn):
         '''
@@ -30,19 +59,11 @@ class MLConfig(object):
         Args:
             dict: dictionary of a config.
         '''
-        config = munch.munchify(dic)
-        return MLConfig(config, config.graph, config.trainer, config.predictor,
-                        config.io, config.metric)
+        global_config = munch.munchify(dic)
+        component_config_lst = [global_config]
 
-    @classmethod
-    def from_internal_file(cls, config_name):
-        pass
+        for component in ['graph', 'trainer', 'predictor', 'io', 'metric']:
+            config = munch.munchify(getattr(global_config, component))
+            component_config_lst.append(config)
 
-    def __init__(self, global_config, graph, trainer, predictor, io, metric):
-        self._internal = global_config
-        self.global_config = global_config
-        self.graph = graph
-        self.trainer = trainer
-        self.predictor = predictor
-        self.io = io
-        self.metric = metric
+        return GlobalConfig(*component_config_lst)

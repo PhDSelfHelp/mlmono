@@ -11,12 +11,12 @@ class MLIO(object):
     # INTERLEAVE_CYCLE -> how many concurrent open files.
     # See https://www.tensorflow.org/performance/datasets_performance.
 
-    DATA_FILE_PATTERN = "*.tfrecord"
+    DATA_FILE_PATTERN = "*.tfrecords"
 
     INTERLEAVE_BLOCK = 1
     INTERLEAVE_CYCLE = 100
     DATA_SHUFFLE_BUFFER = 128
-
+    NUM_PARALLEL_PARSE = 4
 
     def __init__(self, global_config):
         self.global_config = global_config
@@ -29,9 +29,10 @@ class MLIO(object):
         self.summary_writer = None
 
         # Data reading configs for tf.data.TFRecordDataset.
+        self.batch_size = self.global_config.trainer.batch_size
+
         self.data_enable_download = getattr(self.io_config,
                                             'data_enable_download', False)
-        self.batch_size = self.io_config.batch_size
         self.data_file_pattern = getattr(self.io_config, 'data_file_pattern',
                                          MLIO.DATA_FILE_PATTERN)
         self.interleave_block = getattr(self.io_config, 'interleave_block',
@@ -40,6 +41,8 @@ class MLIO(object):
                                         MLIO.INTERLEAVE_CYCLE)
         self.data_shuffle_buffer = getattr(self.io_config, 'data_shuffle_buffer',
                                            MLIO.DATA_SHUFFLE_BUFFER)
+        self.num_parallel_parse = getattr(self.io_config, 'num_parallel_parse',
+                                           MLIO.NUM_PARALLEL_PARSE)
 
         self.data_dir = getattr(self.io_config, 'data_dir', None)
 
@@ -73,7 +76,7 @@ class MLIO(object):
     def _gen_tf_dataset(self):
         raise NotImplementedError
 
-    def gen_input_fn(self, num_epochs):
+    def gen_input_fn(self, num_steps):
         raise NotImplementedError
 
     @staticmethod
@@ -95,22 +98,23 @@ class TFRecordIO(MLIO):
             io.logs_dir, graph=tf.get_default_graph())
         return io
 
-    def gen_input_fn(self, num_epochs):
+    def gen_input_fn(self, num_steps):
         # Generate tf dataset.
         if self.data_enable_download:
             self.download_data_if_not_exist(self.data_dir)
-        self.dataset = self._gen_tf_dataset()
 
         def input_fn():
-            self.iterator = self.dataset.make_one_shot_iterator()
-
-            data_ite = iterator.get_next()
-            features, labels = self.parse_iter(data_ite)
-            return features, labels
+            # Generate dataset so that input_fn's implicit context and graph is used
+            # in the dataset generation.
+            self.dataset = self._gen_tf_dataset()
+            return self.dataset
 
         return input_fn
 
     def _gen_tf_dataset(self):
+        # TODO(jdaaph) (URGENT): clean the method of commented code and put config
+        #                        constants declared only in the ctor.
+
         list_files = tf.data.Dataset.list_files(self.filenames)
         if is_training(self.mode):
             list_files = list_files.shuffle(self.io_config.fn_shuffle_buffer)
@@ -119,15 +123,20 @@ class TFRecordIO(MLIO):
         # this ensures better reproducibility.
         dataset = list_files.apply(
             tf.contrib.data.parallel_interleave(
-                lambda filename: self.parse_file(filename),
+                tf.data.TFRecordDataset,
                 cycle_length=self.interleave_cycle,
                 block_length=self.interleave_block))
+        dataset = dataset.map(lambda raw: self.parse_file(raw))
 
+        # Always shuffle before batch to promote randomness in the training data.
         # The data_shuffle_buffer should be some value > rows in single data shard (record).
-        dataset = dataset.batch(batch_size=self.batch_size)
         if is_training(self.mode):
             dataset = dataset.shuffle(self.io_config.data_shuffle_buffer)
-        dataset = dataset.repeat(num_epochs)
+        dataset = dataset.repeat(self.global_config.trainer.num_steps)
+        dataset = dataset.batch(batch_size=self.batch_size)
+
+        dataset = dataset.map(map_func=self.parse_iter,
+                              num_parallel_calls=self.num_parallel_parse)
         return dataset
 
     @staticmethod
@@ -156,7 +165,7 @@ class KerasDatasetIO(MLIO):
         io.dataset = io._gen_tf_dataset()
         return io
 
-    def gen_input_fn(self, num_epochs):
+    def gen_input_fn(self, num_steps):
         self.dataset = self._gen_tf_dataset()
 
         def input_fn():

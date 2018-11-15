@@ -4,33 +4,54 @@ mode: train
 graph:
     graph_name: SqueezeSegNet
 
+    ang_filter_coef: 0.02
+    ang_theta_a: [.9, .9, .6, .6]
+
+    bi_filter_coef: 0.1
+    bilateral_theta_a: [.9, .9, .6, .6]
+    bilateral_theta_r: [.015, .015, .01, .01]
+    
 
 io:
     io_name: KittiSqueezeSegIO
 
     data_enable_download: false
-    data_dir: data/kitti_squeezeseg
+    data_base_dir: data/kitti_squeezeseg
+    data_dir: data/kitti_squeezeseg/lidar_2d_tfrecords
     logs_dir: /tmp/run_0/logs
     model_dir: /tmp/run_0/model
 
-    batch_size: 24
     fn_shuffle_buffer: 100
+    data_shuffle_buffer: 100
 
     azimuth_level: 512
     zenith_level: 64
 
+    classes: ['unknown', 'car', 'pedestrian', 'cyclist']
+    num_class: 4
 
 trainer: 
+    trainer_name: SqueezeSegTrainer
+
+    num_steps: 30000
+
     cls_loss_coef: 15.0
     weight_decay: 0.0001
-    learning_rate: 0.01
+    lr: 0.01
     decay_steps: 10000
     max_grad_norm: 1.0
     momentum: 0.9
     lr_decay_factor: 0.5
 
+    batch_size: 32
 
-predictor: null
+
+predictor:
+    predictor_name: PlaceHolder
 
 
-metric: null
+metric:
+    - metric_name: Viz
+    - metric_name: IOUSummary
+
+
