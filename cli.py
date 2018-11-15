@@ -12,6 +12,7 @@ def main():
 
 @click.command()
 @click.option('--config', help='The config file', required=True)
+@click.argument('custom_confs', nargs=-1)
 def train(config):
     config = GlobalConfig.from_file(config)
     config.global_config.mode = 'train'
@@ -21,6 +22,7 @@ def train(config):
 
 @click.command()
 @click.option('--config', help='The config file', required=True)
+@click.argument('custom_confs', nargs=-1)
 def predict(config):
     config = GlobalConfig.from_file(config)
     config.global_config.mode = 'predict'
