@@ -3,7 +3,6 @@ import yaml
 
 # add overwriting with double underscore functionality
 
-
 class MLConfig(object):
 
     def __getattr__(self, attr):
@@ -13,6 +12,18 @@ class MLConfig(object):
             of the MLConfig object directly to its dictionary / munch representation.
         '''
         return getattr(self._internal, attr)
+
+    def __contains__(self, attr):
+        if getattr(self._internal, attr, None) == 'None':
+            return False
+        else:
+            return True
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def __setitem__(self, key, val):
+        setattr(self, key, val)
 
     def __init__(self, internal_munch):
         self._internal = internal_munch
@@ -28,6 +39,8 @@ class MLConfig(object):
 
 
 class GlobalConfig(MLConfig):
+    
+    _COLLECTION_TYPES = [list, dict, munch.Munch, MLConfig]
 
     def __init__(self, global_config, graph, trainer, predictor, io, metric):
         self._internal = global_config
@@ -67,3 +80,21 @@ class GlobalConfig(MLConfig):
             component_config_lst.append(config)
 
         return GlobalConfig(*component_config_lst)
+
+    def override_field(self, path_level, val, can_create=False):
+        curr_level = self
+        for idx, key in enumerate(path_level):
+            if idx == len(path_level) - 1:
+                if not can_create:
+                    assert key in curr_level
+                if key in curr_level and type(curr_level[key]) in GlobalConfig._COLLECTION_TYPES:
+                    raise KeyError("The key you referred is still a dict or list.")
+                curr_level[key] = val
+            else:
+                try:
+                    curr_level = curr_level[key]
+                except KeyError as err:
+                    if can_create:
+                        curr_level = Munch
+                    else:
+                        raise KeyError from err

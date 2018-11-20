@@ -16,4 +16,8 @@ io:
     logs_dir: mnist/run_0/logs
     model_dir: mnist/run_0/model
 
+trainer:
+    trainer_name: PlaceHolder
+    batch_size: 32
+
 
