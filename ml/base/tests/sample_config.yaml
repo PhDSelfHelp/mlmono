@@ -1,0 +1,25 @@
+mode: train
+
+
+graph:
+    graph_name: PlaceHolder
+    ang_filter_coef: 0.02
+    
+
+io:
+    io_name: PlaceHolder
+    data_enable_download: true
+
+
+trainer: 
+    trainer_name: PlaceHolder
+    num_steps: 30000
+    batch_size: 32
+
+
+predictor:
+    predictor_name: PlaceHolder
+
+
+metric:
+    - metric_name: PlaceHolder
